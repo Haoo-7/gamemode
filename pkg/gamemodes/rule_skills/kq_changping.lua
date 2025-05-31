@@ -26,7 +26,7 @@ changping:addEffect(fk.TargetConfirmed, {
     return target == player and data.card.trueName == "slash"
   end,
   on_refresh = function (self, event, target, player, data)
-    data.fixedResponseTimes = (data.fixedResponseTimes or 0) + 1
+    data:setResponseTimes(data:getResponseTimes() + 1)
   end,
 })
 
