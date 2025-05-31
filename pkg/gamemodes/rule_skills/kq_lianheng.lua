@@ -28,7 +28,7 @@ lianheng:addEffect(fk.TurnStart, {
 
 lianheng:addEffect("prohibit", {
   is_prohibited = function(self, from, to, card)
-    if from:getMark("@@qin__lianheng") > 0 then
+    if from and from:getMark("@@qin__lianheng") > 0 then
       return to.chained
     end
   end,

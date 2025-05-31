@@ -65,7 +65,7 @@ tanbei:addEffect(fk.PreCardUse, {
 
 tanbei:addEffect("prohibit", {
   is_prohibited = function(self, from, to, card)
-    return table.contains(from:getTableMark("chaos__tanbei1-turn"), to.id)
+    return from and table.contains(from:getTableMark("chaos__tanbei1-turn"), to.id)
   end,
 })
 

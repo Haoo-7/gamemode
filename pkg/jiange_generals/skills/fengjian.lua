@@ -32,7 +32,7 @@ fengjian:addEffect(fk.TurnEnd, {
 
 fengjian:addEffect("prohibit", {
   is_prohibited = function (self, from, to, card)
-    return from:getMark("@@jiange__fengjian") ~= 0 and card and
+    return from and from:getMark("@@jiange__fengjian") ~= 0 and card and
       table.contains(from:getTableMark("@@jiange__fengjian"), to.id)
   end,
 })
