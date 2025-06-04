@@ -12,15 +12,13 @@ Fk:loadTranslationTable{
   ["$nos__wanyi2"] = "为后需备贞静之德、婉嫕之操。",
 }
 
-local U = require "packages/utility/utility"
-
 wanyi:addEffect("viewas", {
   prompt = "#nos__wanyi",
   interaction = function(self, player)
     local all_names = {"chasing_near", "unexpectation", "drowning", "foresight"}
     local names = player:getViewAsCardNames(wanyi.name, all_names, nil, player:getTableMark("nos__wanyi-turn"))
     if #names == 0 then return end
-    return U.CardNameBox {choices = names, all_choices = all_names}
+    return UI.CardNameBox {choices = names, all_choices = all_names}
   end,
   handly_pile = true,
   card_filter = function (self, player, to_select, selected)
