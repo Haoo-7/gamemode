@@ -8,7 +8,7 @@ rule:addEffect(fk.EventAcquireSkill, {
   can_refresh = function (self, event, target, player, data)
     if target == player then
       local general = Fk.generals[player.general]
-      if general and table.contains(general:getSkillNameList(), data:getSkeleton().name) then
+      if general and table.contains(general:getSkillNameList(), data.skill:getSkeleton().name) then
         return not Fk:canUseGeneral(player.general)
       end
     end
@@ -16,7 +16,7 @@ rule:addEffect(fk.EventAcquireSkill, {
   on_refresh = function (self, event, target, player, data)
     local room = player.room
     room.logic:getCurrentEvent():addCleaner(function()
-      room:handleAddLoseSkills(player, "-"..data:getSkeleton().name, nil)
+      room:handleAddLoseSkills(player, "-"..data.skill:getSkeleton().name, nil, false, true)
     end)
   end,
 })
