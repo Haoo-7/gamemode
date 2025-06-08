@@ -25,6 +25,7 @@ jiuzhu:addEffect(fk.AskForPeaches, {
       skill_name = jiuzhu.name,
       cancelable = true,
       prompt = "#jiuzhu-invoke::" .. data.who,
+      skip = true,
     })
     if #card > 0 then
       event:setCostData(self, {tos = {data.who}, cards = card})
