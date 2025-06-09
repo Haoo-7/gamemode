@@ -151,10 +151,12 @@ local m_1v3_getLogic = function()
         room:setCurrent(p)
         GameEvent.Turn:create(TurnData:new(p)):exec()
         if room.game_finished then break end
+        room:ActExtraTurn()
         if not rest then
           room:setCurrent(lord)
           GameEvent.Turn:create(TurnData:new(lord)):exec()
           if room.game_finished then break end
+          room:ActExtraTurn()
         end
       end
     else

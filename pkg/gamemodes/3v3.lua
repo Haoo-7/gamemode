@@ -362,12 +362,14 @@ local m_3v3_getLogic = function()
         room:setCurrent(to)
         room:setPlayerMark(to, "@!action-round", 1)
         GameEvent.Turn:create(TurnData:new(to)):exec()
+        room:ActExtraTurn()
         while to ~= marshal do
           if room.game_finished then break end
           local vanguards = table.filter(room.alive_players, function (p)
             return p.role:endsWith("vanguard") and marshal:isFriend(p) and p:getMark("@!action-round") == 0
           end)
           if #vanguards > 0 then
+            to = vanguards[1]
             if #vanguards > 1 then
               to = room:askToChoosePlayers(marshal, {
                 min_num = 1,
@@ -377,15 +379,11 @@ local m_3v3_getLogic = function()
                 prompt = "#m_3v3_action",
                 cancelable = false,
               })[1]
-              room:setCurrent(to)
-              room:setPlayerMark(to, "@!action-round", 1)
-              GameEvent.Turn:create(TurnData:new(to)):exec()
-            else
-              to = vanguards[1]
-              room:setCurrent(to)
-              room:setPlayerMark(to, "@!action-round", 1)
-              GameEvent.Turn:create(TurnData:new(to)):exec()
             end
+            room:setCurrent(to)
+            room:setPlayerMark(to, "@!action-round", 1)
+            GameEvent.Turn:create(TurnData:new(to)):exec()
+            room:ActExtraTurn()
           else
             break
           end
