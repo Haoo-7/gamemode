@@ -28,61 +28,41 @@ biantian:addEffect(fk.EventPhaseStart, {
       for _, p in ipairs(player:getEnemies()) do
         room:doIndicate(player, {p})
         room:addPlayerMark(p, "@@kuangfeng", 1)
+        room:addSkill("aux_kuangfeng")
         table.insert(mark, p.id)
       end
-      room:setPlayerMark(player, "_kuangfeng", mark)
+      room:setPlayerMark(player, "jiange__biantian_kuangfeng", mark)
     elseif judge.card.suit == Card.Spade then
       for _, p in ipairs(player:getFriends()) do
         room:doIndicate(player, {p})
         room:addPlayerMark(p, "@@dawu", 1)
+        room:addSkill("aux_dawu")
         table.insert(mark, p.id)
       end
-      room:setPlayerMark(player, "_dawu", mark)
+      room:setPlayerMark(player, "jiange__biantian_dawu", mark)
     end
   end,
 })
 
 biantian:addEffect(fk.TurnStart, {
   can_refresh = function(self, event, target, player, data)
-    return target == player and (player:getMark("_kuangfeng") ~= 0 or player:getMark("_dawu") ~= 0)
+    return target == player and (player:getMark("jiange__biantian_kuangfeng") ~= 0 or player:getMark("jiange__biantian_dawu") ~= 0)
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
-    if player:getMark("_kuangfeng") ~= 0 then
-      for _, id in ipairs(player:getTableMark("_kuangfeng")) do
+    if player:getMark("jiange__biantian_kuangfeng") ~= 0 then
+      for _, id in ipairs(player:getTableMark("jiange__biantian_kuangfeng")) do
         local p = room:getPlayerById(id)
         room:removePlayerMark(p, "@@kuangfeng", 1)
       end
-      room:setPlayerMark(player, "_kuangfeng", 0)
+      room:setPlayerMark(player, "jiange__biantian_kuangfeng", 0)
     end
-    if player:getMark("_dawu") ~= 0 then
-      for _, id in ipairs(player:getTableMark("_dawu")) do
+    if player:getMark("jiange__biantian_dawu") ~= 0 then
+      for _, id in ipairs(player:getTableMark("jiange__biantian_dawu")) do
         local p = room:getPlayerById(id)
         room:removePlayerMark(p, "@@dawu", 1)
       end
-      room:setPlayerMark(player, "_dawu", 0)
-    end
-  end,
-})
-
-biantian:addEffect(fk.DamageInflicted, {
-  mute = true,
-  is_delay_effect = true,
-  can_trigger = function (self, event, target, player, data)
-    return (target:getMark("@@kuangfeng") > 0 and data.damageType == fk.FireDamage and player:getMark("_kuangfeng") ~= 0) or
-      (target:getMark("@@dawu") > 0 and data.damageType ~= fk.ThunderDamage and player:getMark("_dawu") ~= 0)
-  end,
-  on_use = function (self, event, target, player, data)
-    local room = player.room
-    if target:getMark("@@kuangfeng") > 0 and data.damageType == fk.FireDamage and player:getMark("_kuangfeng") ~= 0 then
-      room:notifySkillInvoked(player, "kuangfeng", "offensive")
-      player:broadcastSkillInvoke("kuangfeng")
-      data:changeDamage(1)
-    end
-    if target:getMark("@@dawu") > 0 and data.damageType ~= fk.ThunderDamage and player:getMark("_dawu") ~= 0 then
-      room:notifySkillInvoked(player, "dawu", "defensive")
-      player:broadcastSkillInvoke("dawu")
-      data:preventDamage()
+      room:setPlayerMark(player, "jiange__biantian_dawu", 0)
     end
   end,
 })
