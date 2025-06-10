@@ -32,7 +32,7 @@ skill:addEffect("cardskill", {
           card = card,
           from = player,
           tos = {to},
-          extra_use = true,
+          extraUse = true,
         })
       end
     end
