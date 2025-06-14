@@ -24,6 +24,7 @@ local chaos_mode_cards = require "packages/gamemode/pkg/chaos_mode_cards"
 local espionage_cards = require "packages/gamemode/pkg/espionage_cards"
 local vanished_dragon_cards = require "packages/gamemode/pkg/vanished_dragon_cards"
 local variation_cards = require "packages/gamemode/pkg/variation_cards"
+local certamen_cards = require "packages/gamemode/pkg/certamen_cards"
 local derived_cards = require "packages/gamemode/pkg/derived_cards"
 local v33_cards = require "packages/gamemode/pkg/3v3_cards"
 local v11_cards = require "packages/gamemode/pkg/1v1_cards"
@@ -43,6 +44,7 @@ return {
   espionage_cards,
   vanished_dragon_cards,
   variation_cards,
+  certamen_cards,
   derived_cards,
   v33_cards,
   v11_cards,

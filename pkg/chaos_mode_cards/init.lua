@@ -14,7 +14,7 @@ extension.game_modes_blacklist = {
 extension:loadSkillSkelsByPath("./packages/gamemode/pkg/chaos_mode_cards/skills")
 
 Fk:loadTranslationTable{
-  ["chaos_mode_cards"] = "文和乱武特殊牌",
+  ["chaos_mode_cards"] = "文和乱武",
 }
 
 extension:addCardSpec("poison")

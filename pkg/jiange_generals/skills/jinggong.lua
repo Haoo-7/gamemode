@@ -5,7 +5,7 @@ local jinggong = fk.CreateSkill {
 
 Fk:loadTranslationTable{
   ["jiange__jinggong"] = "惊弓",
-  [":jiange__jinggong"] = "锁定技，你使用【杀】无距离限制；回合结束时，若你本回合未使用过【杀】，你失去1点体力。。",
+  [":jiange__jinggong"] = "锁定技，你使用【杀】无距离限制；回合结束时，若你本回合未使用过【杀】，你失去1点体力。",
 }
 
 jinggong:addEffect(fk.TurnEnd, {

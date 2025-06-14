@@ -10,6 +10,7 @@ Fk:loadTranslationTable{
   ["v11"] = "1v1",
   ["vd"] = "忠胆",
   ["var"] = "应变",
+  ["chaos"] = "文和乱武",
 }
 
 local zombie = General:new(extension, "zombie", "god", 1)

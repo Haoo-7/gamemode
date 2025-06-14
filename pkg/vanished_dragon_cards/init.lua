@@ -17,7 +17,7 @@ extension.game_modes_blacklist = {
 extension:loadSkillSkelsByPath("./packages/gamemode/pkg/vanished_dragon_cards/skills")
 
 Fk:loadTranslationTable{
-  ["vanished_dragon_cards"] = "忠胆英杰特殊牌",
+  ["vanished_dragon_cards"] = "忠胆英杰",
 }
 
 extension:addCardSpec("diversion", Card.Spade, 3)

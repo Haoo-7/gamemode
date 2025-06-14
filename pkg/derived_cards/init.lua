@@ -141,23 +141,6 @@ extension:addCardSpec("raid_and_frontal_attack", Card.Diamond, 5)
 extension:addCardSpec("raid_and_frontal_attack", Card.Diamond, 7)
 extension:addCardSpec("raid_and_frontal_attack", Card.Diamond, 9)
 
-local demobilized = fk.CreateCard{
-  name = "&demobilized",
-  type = Card.TypeTrick,
-  skill = "demobilized_skill",
-}
-extension:addCardSpec("demobilized", Card.Spade, 3)
-Fk:loadTranslationTable{
-  ["demobilized"] = "解甲归田",
-  [":demobilized"] = "锦囊牌<br/>"..
-  "<b>时机</b>：出牌阶段<br/>"..
-  "<b>目标</b>：一名装备区内有牌的角色<br/>"..
-  "<b>效果</b>：目标获得其装备区内的所有牌。",
-
-  ["demobilized_skill"] = "解甲归田",
-  ["#demobilized_skill"] = "选择一名角色，目标角色获得其装备区内的所有牌",
-}
-
 local js__peace_spell = fk.CreateCard{
   name = "&js__peace_spell",
   type = Card.TypeEquip,
@@ -182,7 +165,6 @@ extension:loadCardSkels {
   enemy_at_the_gates,
   mobile__enemy_at_the_gates,
   raid_and_frontal_attack,
-  demobilized,
 
   js__peace_spell,
 }
