@@ -12,6 +12,8 @@ skill:addEffect("cardskill", {
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true
+      effect.responseToEvent.extra_data = effect.responseToEvent.extra_data or {}
+      effect.responseToEvent.extra_data.borrow_arrows = effect.from
     end
   end,
 })
@@ -43,6 +45,7 @@ local spec = {
   end,
   on_trigger = function (self, event, target, player, data)
     local room = player.room
+    room:addSkill(skill.name)
     local use = room:askToUseCard(player, {
       pattern = "borrow_arrows",
       skill_name = "",
@@ -61,5 +64,28 @@ skill:addEffect(fk.PreCardEffect, spec)
 
 --无懈后
 skill:addEffect(fk.BeforeCardEffect, spec)
+
+skill:addEffect(fk.CardUseFinished, {
+  mute = true,
+  is_delay_effect = true,
+  can_trigger = function (self, event, target, player, data)
+    if player.room:getCardArea(data.card) == Card.Processing and not player.dead then
+      local to
+      player.room.logic:getCurrentEvent():searchEvents(GameEvent.CardEffect, 1, function (e)
+        local effect = e.data
+        if effect.extra_data then
+          to = effect.extra_data.borrow_arrows
+        end
+      end)
+      if to == player then
+        return true
+      end
+    end
+  end,
+  on_cost = Util.TrueFunc,
+  on_use = function (self, event, target, player, data)
+    player.room:moveCardTo(data.card, Card.PlayerHand, player, fk.ReasonJustMove, skill.name, nil, true, player)
+  end,
+})
 
 return skill

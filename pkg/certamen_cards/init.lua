@@ -50,7 +50,7 @@ extension:addCardSpec("bee_armor", Card.Diamond, 10)
 extension:addCardSpec("certamen__women_dress", Card.Heart, 10)
 extension:addCardSpec("night_cloth", Card.Spade, 10)
 extension:addCardSpec("certamen__inferior_horse", Card.Heart, 5)
---extension:addCardSpec("brocade_box", Card.Spade, 10)
+extension:addCardSpec("brocade_box", Card.Spade, 10)
 
 local demobilized = fk.CreateCard{
   name = "demobilized",
@@ -177,7 +177,7 @@ local night_cloth = fk.CreateCard{
 Fk:loadTranslationTable{
   ["night_cloth"] = "夜行衣",
   [":night_cloth"] = "装备牌·防具<br/>"..
-  "<b>防具技能</b>：锁定技，黑色锦囊牌对你无效。",
+  "<b>防具技能</b>：锁定技，你不能成为黑色锦囊牌的目标。",
 }
 
 local inferior_horse = fk.CreateCard{
@@ -192,14 +192,14 @@ Fk:loadTranslationTable{
   [":certamen__inferior_horse"] = "装备牌·进攻坐骑<br/>"..
   "<b>坐骑技能</b>：锁定技，当【驽马】进入你的装备区后，你弃置装备区里的所有其他牌。",
 }
---[[
+
 local brocade_box = fk.CreateCard{
   name = "brocade_box",
   type = Card.TypeEquip,
   sub_type = Card.SubtypeTreasure,
   skill = "certamen__equip_skill",
-  equip_skill = "#brocade_box_skill",
-}]]
+  equip_skill = "brocade_box_skill&",
+}
 Fk:loadTranslationTable{
   ["brocade_box"] = "锦盒",
   [":brocade_box"] = "装备牌·宝物<br/>"..
@@ -220,7 +220,7 @@ extension:loadCardSkels {
   women_dress,
   night_cloth,
   inferior_horse,
-  --brocade_box,
+  brocade_box,
 }
 
 return extension
