@@ -25,35 +25,19 @@ skill:addEffect("active", {
     local suit = Fk:getCardById(player:getPile("$brocade_box")[1]).suit
     room:moveCardTo(player:getPile("$brocade_box"), Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile, skill.name, nil, true, player)
     if not player.dead then
-      local moves = {}
-      local ids = table.filter(player:getCardIds("h"), function (id)
-        return Fk:getCardById(id).suit == suit and not player:prohibitDiscard(id)
-      end)
-      if #ids > 0 then
-        table.insert(moves, {
-          ids = ids,
-          from = player,
-          toArea = Card.DiscardPile,
-          moveReason = fk.ReasonDiscard,
-          skillName = skill.name,
-          proposer = player,
-        })
+      local ids = {}
+      for _, id in ipairs(player:getCardIds("h")) do
+        if Fk:getCardById(id).suit == suit and not player:prohibitDiscard(id) then
+          table.insert(ids, id)
+        end
       end
-      ids = table.filter(player:getCardIds("e"), function (id)
-        return Fk:getCardById(id).name == skill.attached_equip
-      end)
-      if #ids > 0 then
-        table.insert(moves, {
-          ids = ids,
-          from = player,
-          toArea = Card.DiscardPile,
-          moveReason = fk.ReasonDiscard,
-          skillName = skill.name,
-          proposer = player,
-        })
+      for _, id in ipairs(player:getCardIds("e")) do
+        if Fk:getCardById(id).name == skill.attached_equip then
+          table.insert(ids, id)
+        end
       end
-      if #moves > 0 then
-        room:moveCards(table.unpack(moves))
+      if #ids > 0 then
+        room:throwCard(ids, skill.name, player, player)
       end
     end
   end,
@@ -63,24 +47,18 @@ skill:addEffect(fk.CardUseFinished, {
   mute = true,
   is_delay_effect = true,
   can_trigger = function (self, event, target, player, data)
-    return target == player and data.card.name == skill.attached_equip and not player.dead and
-      table.find(data.tos, function (p)
-        return p:hasSkill(skill.name, true)
-      end)
+    return player:hasSkill(skill.name) and data.card.name == skill.attached_equip and
+      table.contains(data.tos, player) and not target.dead
   end,
   on_trigger = function (self, event, target, player, data)
     local room = player.room
-    local to = table.find(data.tos, function (p)
-      return p:hasSkill(skill.name, true)
-    end)
-    if to == nil then return end
-    local card = room:askToChooseCard(player, {
-      target = player,
+    local card = room:askToChooseCard(target, {
+      target = target,
       flag = { card_data = {{ "Top", room:getNCards(2) }} },
       skill_name = skill.name,
-      prompt = "#brocade_box_skill-ask::"..to.id,
+      prompt = "#brocade_box_skill-ask::"..player.id,
     })
-    to:addToPile("$brocade_box", card, false, skill.name, player, { player.id })
+    player:addToPile("$brocade_box", card, false, skill.name, target, { target.id })
   end,
 })
 

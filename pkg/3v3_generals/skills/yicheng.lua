@@ -8,6 +8,7 @@ Fk:loadTranslationTable{
 
   ["#v33__yicheng-ask"] = "疑城：是否令 %dest 摸一张牌并弃置一张手牌？",
   ["#v33__yicheng-discard"] = "疑城：请弃置一张手牌，若为装备牌则改为使用之",
+  ["#v33__yicheng-use"] = "疑城：请使用%arg",
 
   ["$v33__yicheng1"] = "不怕死，就尽管放马过来！",
   ["$v33__yicheng2"] = "待末将布下疑城，以退曹贼。",
@@ -39,16 +40,17 @@ yicheng:addEffect(fk.TargetConfirmed, {
         include_equip = false,
         skill_name = yicheng.name,
         cancelable = false,
-        pattern = nil,
         prompt = "#v33__yicheng-discard",
         skip = true,
       })
-      card = Fk:getCardById(card[1])
-      if card.type == Card.TypeEquip and not target:isProhibited(target, card) then
-        room:useCard({
-          from = target,
-          tos = {target},
-          card = card,
+      if #card == 0 then return end
+      card = card[1]
+      if Fk:getCardById(card).type == Card.TypeEquip then
+        room:askToUseRealCard(target, {
+          pattern = {card},
+          skill_name = yicheng.name,
+          prompt = "#v33__yicheng-use:::"..Fk:getCardById(card):toLogString(),
+          cancelable = false,
         })
       else
         room:throwCard(card, yicheng.name, target, target)

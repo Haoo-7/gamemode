@@ -75,6 +75,7 @@ skill:addEffect(fk.CardUseFinished, {
         local effect = e.data
         if effect.extra_data then
           to = effect.extra_data.borrow_arrows
+          return to and not to.dead
         end
       end)
       if to == player then
