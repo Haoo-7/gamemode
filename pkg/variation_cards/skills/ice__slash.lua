@@ -3,7 +3,8 @@ local skill = fk.CreateSkill {
 }
 
 Fk:loadTranslationTable{
-  ["#ice_damage_skill-invoke"] = "冰杀：你可以防止对 %dest 造成的冰冻伤害，改为依次弃置其两张牌",
+  ["#ice_damage_skill-invoke"] = "你可以防止对 %dest 造成的冰冻伤害，改为依次弃置其两张牌",
+  ["ice_damage_skill"] = "冰冻伤害",
 }
 
 local slash_skill = Fk.skills["slash_skill"] --[[ @as ActiveSkill ]]
@@ -40,16 +41,16 @@ skill:addEffect("cardskill", {
 
 skill:addEffect(fk.DamageCaused, {
   global = true,
+  priority = 0,
   mute = true,
   can_trigger = function(self, event, target, player, data)
     return target == player and data.damageType == fk.IceDamage and
-      data.card and data.card.name == "ice__slash" and
-      not data.chain and not data.to:isNude()
+      not data.chain and not data.to:isNude() and not player.dead
   end,
   on_cost = function (self, event, target, player, data)
     local room = player.room
     if room:askToSkillInvoke(player, {
-      skill_name = skill.name,
+      skill_name = "ice_damage_skill",
       prompt = "#ice_damage_skill-invoke::"..data.to.id,
     }) then
       event:setCostData(self, {tos = {data.to}})
@@ -59,14 +60,14 @@ skill:addEffect(fk.DamageCaused, {
   on_use = function(self, event, target, player, data)
     local room = player.room
     data:preventDamage()
-    for i = 1, 2 do
+    for _ = 1, 2 do
       if data.to:isNude() or data.to.dead or player.dead then break end
       local card = room:askToChooseCard(player, {
         target = data.to,
         flag = "he",
-        skill_name = skill.name,
+        skill_name = "ice_damage_skill",
       })
-      room:throwCard(card, skill.name, data.to, player)
+      room:throwCard(card, "ice_damage_skill", data.to, player)
     end
   end,
 })
