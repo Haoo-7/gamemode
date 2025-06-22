@@ -53,7 +53,7 @@ skill:addEffect("cardskill", {
           prompt = "#underhanding-card::" .. target.id,
           cancelable = false,
         })[1]
-        room:moveCardTo(c, Player.Hand, target, fk.ReasonGive, skill.name, nil, false, player.id)
+        room:moveCardTo(c, Player.Hand, target, fk.ReasonGive, skill.name, nil, false, player)
       end
     end
   end
