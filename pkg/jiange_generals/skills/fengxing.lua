@@ -19,19 +19,16 @@ fengxing:addEffect(fk.EventPhaseStart, {
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local targets = table.filter(player:getEnemies(), function (p)
-      return not player:isProhibited(p, Fk:cloneCard("slash"))
-    end)
-    local use = room:askToUseRealCard(player, {
-      pattern = "slash",
+    local use = room:askToUseVirtualCard(player, {
+      name = "slash",
       skill_name = fengxing.name,
-      prompt = "#jiange__fengxing-slash",
+      prompt = "#jiange__fengxing-invoke",
       cancelable = true,
       extra_data = {
         bypass_distances = true,
         bypass_times = true,
         extraUse = true,
-        exclusive_targets = table.map(targets, Util.IdMapper),
+        must_targets = table.map(player:getEnemies(), Util.IdMapper),
       },
       skip = true,
     })
