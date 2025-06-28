@@ -30,8 +30,6 @@ local desc_brawl = [[
 
 local ban_skills = {
   "fenyong", "danggu", -- 弱智技能
-  "duorui", "quanfeng", "zhongliu", "yongdi", "chuanwu", "tuogu", "zeyue", "n_dianlun", "xiaode",
-  "mou__xingshang", "os_mou__xingshang", "tongdao" -- 和武将牌上的技能有关的
 }
 
 local brawl_getLogic = function()
@@ -44,7 +42,7 @@ local brawl_getLogic = function()
 
   function brawl_logic:chooseGenerals()
     local room = self.room ---@type Room
-    room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlInitialNotice"))
+    -- room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlInitialNotice"))
     for _, p in ipairs(room.players) do
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
@@ -56,15 +54,16 @@ local brawl_getLogic = function()
     local skill_num = room.settings.generalNum -- 技能池数量由选将数决定，农民等于，地主1.5倍（向下取整）
     local total = math.floor(skill_num * 3.5)
     local skill_pool, general_pool = {}, {}
-    local all_generals = room.general_pile -- Fk:getAllGenerals() -- replace Engine:getGeneralsRandomly
+    local all_generals = Fk:getAllGenerals() -- 允许同名武将
     local i = 0
     for _ = 1, 999 do
-      local general = Fk.generals[table.random(all_generals)] ---@type General
+      local general = table.random(all_generals)
       local skills = general:getSkillNameList()
       local skill = table.random(skills) ---@type string
       local des = Fk:translate(":" .. skill, "zh_CN")
       if not table.contains(ban_skills, skill) and not table.contains(skill_pool, skill) and
-        not des:find("势力") and not des:find("[^属]性", nil, false) then
+        -- 排除与势力、性别、武将牌上的技能有关的技能
+        not (des:find("势力") or des:find("[^属]性") or des:find("武将牌上的.?.?.?.?.?.?技能")) then
         i = i + 1
         table.insert(skill_pool, skill)
         table.insert(general_pool, general.name)
@@ -154,7 +153,7 @@ local brawl_mode = fk.CreateGameMode{
   minPlayer = 3,
   maxPlayer = 3,
   main_mode = "1v2_mode",
-  rule = Fk.skills["#1v2_brawl&"] --[[@as TriggerSkill]],
+  rule = "#1v2_brawl&",
   logic = brawl_getLogic,
   surrender_func = function(self, playedTime)
     local surrenderJudge = { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
@@ -203,7 +202,7 @@ Fk:loadTranslationTable{
   ["#brawl-choose"] = "请选择%arg个技能出战",
   ["@brawl_skills"] = "",
 
-  ["#BrawlInitialNotice"] = "修订：农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）",
+  ["#BrawlInitialNotice"] = "农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）",
 }
 
 return brawl_mode
