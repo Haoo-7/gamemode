@@ -22,6 +22,9 @@ skill:addEffect(fk.TargetConfirming, {
   global = true,
   mute = true,
   can_trigger = function (self, event, target, player, data)
+    if target == player and player:getHandcardNum() == 1 then
+      player:filterHandcards()
+    end
     return target == player and data.card.type ~= Card.TypeEquip and
       player:getHandcardNum() == 1 and Fk:getCardById(player:getCardIds("h")[1]).name == "crafty_escape" and
       not player:prohibitUse(Fk:getCardById(player:getCardIds("h")[1]))
