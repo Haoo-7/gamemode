@@ -1,5 +1,6 @@
 local dongcha = fk.CreateSkill {
-  name = "vd_dongcha&",
+  name = "vd_dongcha",
+  mode_skill = true,
 }
 
 Fk:loadTranslationTable{

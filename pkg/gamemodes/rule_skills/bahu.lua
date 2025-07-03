@@ -1,6 +1,7 @@
 local bahu = fk.CreateSkill {
   name = "m_bahu",
   tags = { Skill.Compulsory },
+  mode_skill = true,
 }
 
 Fk:loadTranslationTable{

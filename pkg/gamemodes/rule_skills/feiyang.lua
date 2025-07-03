@@ -1,5 +1,6 @@
 local feiyang = fk.CreateSkill {
   name = "m_feiyang",
+  mode_skill = true,
 }
 
 Fk:loadTranslationTable{

@@ -1,6 +1,7 @@
 local sheshen = fk.CreateSkill {
-  name = "vd_sheshen&",
+  name = "vd_sheshen",
   tags = { Skill.Compulsory },
+  mode_skill = true,
 }
 
 Fk:loadTranslationTable{
