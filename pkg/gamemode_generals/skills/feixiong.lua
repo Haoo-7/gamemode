@@ -37,8 +37,8 @@ feixiong:addEffect(fk.EventPhaseStart, {
   on_use = function(self, event, target, player, data)
     local room = player.room
     local to = event:getCostData(self).tos[1]
-    local pindian = player:pindian({target}, feixiong.name)
-    local from = pindian.results[target].winner
+    local pindian = player:pindian({ to }, feixiong.name)
+    local from = pindian.results[to].winner
     if from then
       to = from == player and to or player
       if not to.dead then
