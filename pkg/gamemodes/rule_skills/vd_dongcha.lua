@@ -4,8 +4,8 @@ local dongcha = fk.CreateSkill {
 }
 
 Fk:loadTranslationTable{
-  ["vd_dongcha&"] = "洞察",
-  [":vd_dongcha&"] = "游戏开始时，随机一名反贼的身份对你可见。准备阶段，你可以弃置场上的一张牌。",
+  ["vd_dongcha"] = "洞察",
+  [":vd_dongcha"] = "游戏开始时，随机一名反贼的身份对你可见。准备阶段，你可以弃置场上的一张牌。",
 
   ["#vd_dongcha-choose"] = "洞察：你可以弃置一名角色场上一张牌",
   ["#VDDongcha"] = "明忠 %from 发动了〖洞察〗，一名反贼的身份已被其知晓",

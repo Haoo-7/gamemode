@@ -5,11 +5,11 @@ local sheshen = fk.CreateSkill {
 }
 
 Fk:loadTranslationTable{
-  ["vd_sheshen&"] = "舍身",
-  [":vd_sheshen&"] = "锁定技，主公处于濒死状态即将死亡时，你令其体力上限+1，回复体力至X点（X为你的体力值），获得你所有牌，然后你死亡。",
+  ["vd_sheshen"] = "舍身",
+  [":vd_sheshen"] = "锁定技，主公处于濒死状态即将死亡时，你令其体力上限+1，回复体力至X点（X为你的体力值），获得你所有牌，然后你死亡。",
 
-  ["$vd_sheshen&1"] = "舍身为主，死而无憾！",
-  ["$vd_sheshen&2"] = "捐躯赴国难，视死忽如归。",
+  ["$vd_sheshen1"] = "舍身为主，死而无憾！",
+  ["$vd_sheshen2"] = "捐躯赴国难，视死忽如归。",
 }
 
 sheshen:addEffect(fk.AskForPeachesDone, {
