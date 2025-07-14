@@ -1,5 +1,6 @@
 local zhongyi = fk.CreateSkill {
   name = "zhongyi",
+  derived_piles = "zhongyi",
 }
 
 Fk:loadTranslationTable{
@@ -14,7 +15,6 @@ zhongyi:addEffect("active", {
   prompt = "#zhongyi",
   target_num = 0,
   min_card_num = 1,
-  derived_piles = zhongyi.name,
   can_use = function(self, player)
     return #player:getPile(zhongyi.name) == 0
   end,
