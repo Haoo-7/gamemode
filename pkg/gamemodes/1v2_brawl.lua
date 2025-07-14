@@ -12,7 +12,7 @@ local desc_brawl = [[
   **地主从中挑选3个作为本局的技能；农民从中挑选2个作为本局的技能**。
 
   地主5点体力上限，农民4点体力上限。
-  
+
   地主拥有以下额外技能：
 
   - **飞扬**：判定阶段开始时，你可以弃置两张手牌并弃置自己判定区内的一张牌。
@@ -28,6 +28,7 @@ local desc_brawl = [[
   *禁包、禁将之后其技能不会在技能池中出现。*
 ]]
 
+-- 排除部分技能
 local ban_skills = {
   "fenyong", "danggu", -- 弱智技能
 }
@@ -62,8 +63,9 @@ local brawl_getLogic = function()
       local skill = table.random(skills) ---@type string
       local des = Fk:translate(":" .. skill, "zh_CN")
       if not table.contains(ban_skills, skill) and not table.contains(skill_pool, skill) and
-        -- 排除与势力、性别、武将牌上的技能有关的技能
-        not (des:find("势力") or des:find("[^属]性") or des:find("武将牌上的.?.?.?.?.?.?技能")) then
+        -- 排除与势力技、性别（女性、男性、同性、异性）、武将牌上的技能有关的技能
+        -- FIXME: "势力[^武]"无法使用
+        not (des:find("势力技") or des:find("[^属]性") or des:find("武将牌上的.?.?.?.?.?.?技能")) then
         i = i + 1
         table.insert(skill_pool, skill)
         table.insert(general_pool, general.name)
@@ -75,9 +77,13 @@ local brawl_getLogic = function()
     end
 
     local req = Request:new(players, "CustomDialog")
+    local special_generals = { "mouxusheng", "hiddenone", "anjiang" } -- 特殊武将列表
     for k, p in ipairs(players) do
       local avatar = p._splayer:getAvatar()
-      if avatar == "anjiang" then avatar = table.random{ "blank_shibing", "blank_nvshibing" } end
+      if table.contains(special_generals, avatar) then
+        room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlBanSpecialGeneral"))
+        avatar = table.random{ "blank_shibing", "blank_nvshibing" }
+      end
       local avatar_general = Fk.generals[avatar] or Fk.generals["sunce"] or Fk.generals["diaochan"]
       room:setPlayerGeneral(p, avatar_general.name, true)
       room:broadcastProperty(p, "general")
@@ -117,20 +123,6 @@ local brawl_getLogic = function()
   end
 
   function brawl_logic:broadcastGeneral()
-    return
-    --[[
-    local room = self.room
-    local players = room.players
-
-    for _, p in ipairs(players) do
-      assert(p.general ~= "")
-      -- room:broadcastProperty(p, "general")
-      -- room:setPlayerProperty(p, "kingdom", "unknown")
-      room:setPlayerProperty(p, "shield", 0)
-      room:setPlayerProperty(p, "maxHp", p.role == "lord" and 5 or 4)
-      room:setPlayerProperty(p, "hp", p.role == "lord" and 5 or 4)
-    end
-    --]]
   end
 
   function brawl_logic:attachSkillToPlayers()
@@ -203,6 +195,7 @@ Fk:loadTranslationTable{
   ["@brawl_skills"] = "",
 
   ["#BrawlInitialNotice"] = "农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）",
+  ["#BrawlBanSpecialGeneral"] = "特殊武将被强制替换",
 }
 
 return brawl_mode
