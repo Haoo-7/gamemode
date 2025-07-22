@@ -155,12 +155,12 @@ rule:addEffect(fk.BuryVictim, {
         Player.TreasureSlot,
         Player.JudgeSlot,
       }) -- 全部恢复
-      room:changeHero(player, g, true, false, true)
+      room:changeHero(player, g, false, false, true)
 
       -- trigger leave
-
       room:setPlayerProperty(player, "shield", Fk.generals[g].shield)
       room:revivePlayer(player, false)
+      room:setPlayerProperty(player, "hp", Fk.generals[g].hp)
       local draw_data = DrawInitialData:new{ num = math.min(player.maxHp, 5) }
       room.logic:trigger(fk.DrawInitialCards, player, draw_data)
       drawInit(room, player, math.min(player.maxHp, 5))
