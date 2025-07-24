@@ -362,7 +362,7 @@ local m_3v3_getLogic = function()
         room:setCurrent(to)
         room:setPlayerMark(to, "@!action-round", 1)
         GameEvent.Turn:create(TurnData:new(to)):exec()
-        room:ActExtraTurn()
+        room:actExtraTurn()
         while to ~= marshal do
           if room.game_finished then break end
           local vanguards = table.filter(room.alive_players, function (p)
@@ -383,7 +383,7 @@ local m_3v3_getLogic = function()
             room:setCurrent(to)
             room:setPlayerMark(to, "@!action-round", 1)
             GameEvent.Turn:create(TurnData:new(to)):exec()
-            room:ActExtraTurn()
+            room:actExtraTurn()
           else
             break
           end
