@@ -116,6 +116,7 @@ local m_1v1_getLogic = function()
 
     room:doBroadcastNotify("ShowToast", Fk:translate("1v1 choose general"))
     local req = Request:new(room.players, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     req:setData(lord, { lord_generals, 1 })
     req:setData(nonlord, { nonlord_generals, 1 })
     req:setDefaultReply(lord, { lord_generals[1] })

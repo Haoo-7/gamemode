@@ -87,6 +87,7 @@ local chaos_getLogic = function()
     local players = room.players
     local generals = room:getNGenerals(#players * generalNum)
     local req = Request:new(players, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     table.shuffle(generals)
     for i, p in ipairs(players) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)

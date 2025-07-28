@@ -221,6 +221,7 @@ local jiange_getLogic = function()
 
     local players = room.players
     local req = Request:new(room.players, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     for i, p in ipairs(players) do
       local arg = {}
       if i % 2 == 1 then --普通武将

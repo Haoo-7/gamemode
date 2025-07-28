@@ -42,6 +42,7 @@ local m_1v2_getLogic = function()
     -- 地主多发俩武将
     local generals = room:getNGenerals(#players * generalNum + 2)
     local req = Request:new(players, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     for i, p in ipairs(players) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       if p.role == "lord" then

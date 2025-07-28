@@ -206,6 +206,7 @@ local qixi_get_logic = function()
     end
 
     local req = Request:new(nonlord, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     for i, p in ipairs(nonlord) do
       local arg = {}
       local t = (p:getMark("@!qixi_female") > 0) and female_generals or male_generals

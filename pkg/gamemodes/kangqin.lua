@@ -130,6 +130,7 @@ local kangqin_getLogic = function()
     local others = room:getNGenerals( 2* generalNum )
     local to_ask = table.filter(room.players, function(p) return p.role ~= "rebel" end)
     local req = Request:new(to_ask, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     req.focus_text = "AskForGeneral"
     for i, p in ipairs(room.players) do
       local arg, count = nil, 0

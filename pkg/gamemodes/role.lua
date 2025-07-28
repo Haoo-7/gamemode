@@ -58,6 +58,7 @@ local role_mode = fk.CreateGameMode{
       end
 
       local req = Request:new(nonlord, "AskForGeneral")
+      req.timeout = self.room.settings.generalTimeout
       for i, p in ipairs(nonlord) do
         local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
         req:setData(p, { arg, 1 })

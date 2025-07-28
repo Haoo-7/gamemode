@@ -125,7 +125,8 @@ local m_2v2_getLogic = function()
           friend_id = nonlord[1].id,
           me = t4, friend = t1,
         },
-      }
+      },
+      timeout = self.room.settings.generalTimeout,
     })
     for _, p in ipairs(nonlord) do
       local general = json.decode(p.client_reply)

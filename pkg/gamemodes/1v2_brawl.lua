@@ -77,6 +77,7 @@ local brawl_getLogic = function()
     end
 
     local req = Request:new(players, "CustomDialog")
+    req.timeout = self.room.settings.generalTimeout
     local special_generals = { "mouxusheng", "hiddenone", "anjiang" } -- 特殊武将列表
     for k, p in ipairs(players) do
       local avatar = p._splayer:getAvatar()
