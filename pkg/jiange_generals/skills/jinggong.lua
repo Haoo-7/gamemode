@@ -24,7 +24,7 @@ jinggong:addEffect(fk.TurnEnd, {
 
 jinggong:addEffect("targetmod", {
   bypass_distances = function (self, player, skill, card, to)
-    return player:hasSkill(jinggong.name) and skill.trueName == "slash_skill"
+    return player:hasSkill(jinggong.name) and card and card.trueName == "slash"
   end,
 })
 

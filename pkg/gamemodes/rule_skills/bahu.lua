@@ -20,8 +20,8 @@ bahu:addEffect(fk.EventPhaseStart, {
 })
 
 bahu:addEffect("targetmod", {
-  residue_func = function(self, player, skill, scope)
-    if player:hasSkill(bahu.name) and skill.trueName == "slash_skill" and scope == Player.HistoryPhase then
+  residue_func = function(self, player, skill, scope, card)
+    if player:hasSkill(bahu.name) and card and card.trueName == "slash" and scope == Player.HistoryPhase then
       return 1
     end
   end,
