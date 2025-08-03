@@ -189,7 +189,7 @@ GraphicsBox {
           close();
           roomScene.state = "notactive";
           ClientInstance.notifyServer("PushRequest", "updatemini,select," + root.selected);
-          ClientInstance.replyToServer("", JSON.stringify(root.selected));
+          ClientInstance.replyToServer("", root.selected);
         }
       }
 

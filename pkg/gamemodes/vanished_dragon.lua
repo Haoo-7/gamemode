@@ -208,7 +208,7 @@ local vanished_dragon_getLogic = function()
       local lord_maxhp = deputyGeneral and (lord_gs.maxHp + deputyGeneral.maxHp) // 2 or lord_gs.maxHp
       table.insert(lord_skills, (lord_maxhp <= 3 and lord_gs.gender == General.Male) and "vd_dongcha" or "vd_sheshen")
       for _, skill in ipairs(lord_skills) do
-        room:doBroadcastNotify("AddSkill", json.encode{ lord.id, skill })
+        room:doBroadcastNotify("AddSkill", { lord.id, skill })
       end
     end
 

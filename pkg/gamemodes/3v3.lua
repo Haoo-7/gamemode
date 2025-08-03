@@ -240,7 +240,7 @@ local m_3v3_getLogic = function()
       })
       local selected = {}
       if result ~= "" then
-        result = json.decode(result)
+        ---@cast result any
         for i, id in ipairs(result.ids) do
           local g = result.generals[i]
           -- 更新武将替换

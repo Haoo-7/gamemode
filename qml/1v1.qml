@@ -116,9 +116,9 @@ GraphicsBox {
         onClicked: {
           close();
           roomScene.state = "notactive";
-          ClientInstance.replyToServer("", JSON.stringify(
+          ClientInstance.replyToServer("",
             { ids : selectedItem, generals : selectedItem.map(id => generalRepeater.itemAt(id).name) }
-          ));
+          );
         }
       }
 

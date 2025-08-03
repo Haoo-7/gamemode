@@ -129,7 +129,7 @@ local m_2v2_getLogic = function()
       timeout = self.room.settings.generalTimeout,
     })
     for _, p in ipairs(nonlord) do
-      local general = json.decode(p.client_reply)
+      local general = p.client_reply
       room:setPlayerGeneral(p, general, true, true)
       room:findGeneral(general)
     end
@@ -199,7 +199,7 @@ Fk:addMiniGame{
     local room = player.room
     local d = player.mini_game_data.data
     local friend = room:getPlayerById(d.friend_id)
-    friend:doNotify("UpdateMiniGame", json.encode(data))
+    friend:doNotify("UpdateMiniGame", data)
   end,
 }
 

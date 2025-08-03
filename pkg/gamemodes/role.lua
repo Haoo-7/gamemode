@@ -46,7 +46,7 @@ local role_mode = fk.CreateGameMode{
       for _, sname in ipairs(lord_skills) do
         local skill = Fk.skills[sname]
         if not skill:hasTag(Skill.AttachedKingdom) or table.contains(skill:getSkeleton().attached_kingdom, lord.kingdom) then
-          room:doBroadcastNotify("AddSkill", json.encode{ lord.id, sname })
+          room:doBroadcastNotify("AddSkill", { lord.id, sname })
         end
       end
 
