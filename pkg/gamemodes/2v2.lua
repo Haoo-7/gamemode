@@ -39,7 +39,7 @@ local m_2v2_getLogic = function()
       targets = getOtherPlayers(room, owner),
       skill_name = "game_rule",
       prompt = "#m_2v2_choose_buddy",
-      cancelable = false,
+      cancelable = true,
       no_indicate = true,
     })[1]
 
