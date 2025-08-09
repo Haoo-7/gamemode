@@ -144,7 +144,7 @@ local m_1v2_mode = fk.CreateGameMode{
           })
           if choice == "draw2" then
             p:drawCards(2, "game_rule")
-          else
+          elseif choice == "recover" then
             room:recover{
               who = p,
               num = 1,
