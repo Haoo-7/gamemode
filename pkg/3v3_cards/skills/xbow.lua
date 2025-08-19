@@ -27,8 +27,8 @@ sk:addEffect(fk.CardUsing, {
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
-    room:broadcastPlaySound("./packages/standard_cards/audio/card/xbow")
-    room:setEmotion(player, "./packages/standard_cards/image/anim/xbow")
+    room:broadcastPlaySound("./packages/standard_cards/audio/card/crossbow")
+    room:setEmotion(player, "./packages/standard_cards/image/anim/crossbow")
     room:sendLog{
       type = "#InvokeSkill",
       from = player.id,
