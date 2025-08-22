@@ -98,6 +98,7 @@ GraphicsBox {
 
       MetroButton {
         id: convertBtn
+        visible: false
         enabled: false
         text: luatr("Same General Convert")
         onClicked: {
@@ -141,10 +142,11 @@ GraphicsBox {
   }
 
   function loadData(data) {
-    [generals, num, my_selected, ur_selected, prompt] = data;
+    [generals, num, my_selected, ur_selected, prompt, no_convert] = data;
     for (var i = 0; i < generals.length; i++) {
       let generalName = generals[i]
-      if (!my_selected.includes(i) && !ur_selected.includes(i) && lcall("GetSameGenerals", generalName).length) {
+      if (!no_convert && !my_selected.includes(i) && !ur_selected.includes(i) && lcall("GetSameGenerals", generalName).length) {
+        convertBtn.visible = true;
         convertBtn.enabled = true;
         break;
       }
