@@ -9,7 +9,6 @@ Fk:loadTranslationTable{
 
 skill:addEffect("cardskill", {
   prompt = "#daggar_in_smile_skill",
-  can_use = Util.CanUse,
   target_num = 1,
   mod_target_filter = function(self, player, to_select, selected)
     return to_select ~= player
