@@ -8,7 +8,7 @@ Fk:loadTranslationTable{
   "你可以将与“畅军”牌花色相同的牌当【杀】或【闪】使用或打出；准备阶段，你获得所有“畅军”牌。",
 
   ["#v11__changjun"] = "畅军：你可以将与“畅军”牌花色相同的牌当【杀】或【闪】使用或打出",
-  ["#v11__changjun-card"] = "畅军：你可以将至多 %arg 张牌置于武将牌上，你可将与“畅军”牌花色相同的牌当【杀】或【闪】使用或打出。",
+  ["#v11__changjun-card"] = "畅军：你可以将至多 %arg 张牌置于武将牌上，<br>你可将与“畅军”牌花色相同的牌当【杀】或【闪】使用或打出",
 }
 
 changjun:addEffect("viewas", {
@@ -48,7 +48,7 @@ changjun:addEffect(fk.EventPhaseStart, {
   end,
   on_cost = function (self, event, target, player, data)
     local room = player.room
-    local x = 1 + tonumber(room:getBanner(player.role == "lord" and "@firstFallen" or "@secondFallen")[1])
+    local x = 1 + tonumber((room:getBanner(player.role == "lord" and "@firstFallen" or "@secondFallen") or "0")[1])
     local cards = room:askToCards(player, {
       min_num = 1,
       max_num = x,
