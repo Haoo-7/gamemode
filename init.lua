@@ -20,6 +20,7 @@ extension:addGameMode(require "packages/gamemode/pkg/gamemodes/zombie_mode")
 extension:addGameMode(require "packages/gamemode/pkg/gamemodes/kangqin")
 extension:addGameMode(require "packages/gamemode/pkg/gamemodes/jiange")
 
+local mobile_cards = require "packages/gamemode/pkg/mobile_cards"
 local chaos_mode_cards = require "packages/gamemode/pkg/chaos_mode_cards"
 local espionage_cards = require "packages/gamemode/pkg/espionage_cards"
 local vanished_dragon_cards = require "packages/gamemode/pkg/vanished_dragon_cards"
@@ -40,6 +41,7 @@ Fk:loadTranslationTable(require 'packages/gamemode/i18n/en_US', 'en_US')
 return {
   extension,
 
+  mobile_cards,
   chaos_mode_cards,
   espionage_cards,
   vanished_dragon_cards,
