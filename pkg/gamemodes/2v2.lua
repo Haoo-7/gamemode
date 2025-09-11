@@ -105,7 +105,7 @@ local m_2v2_getLogic = function()
     local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
     local t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
     local t4 = table.slice(generals, generalNum * 3 + 1, generalNum * 4 + 1)
-    room:askToMiniGame(nonlord, {
+    local req = room:askToMiniGame(nonlord, {
       skill_name = "AskForGeneral",
       game_type = "2v2_sel",
       data_table = {
@@ -129,7 +129,7 @@ local m_2v2_getLogic = function()
       timeout = self.room.settings.generalTimeout,
     })
     for _, p in ipairs(nonlord) do
-      local general = p.client_reply
+      local general = req:getResult(p)
       room:setPlayerGeneral(p, general, true, true)
       room:findGeneral(general)
     end

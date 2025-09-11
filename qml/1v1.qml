@@ -4,9 +4,9 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Fk
-import Fk.Pages
-import Fk.RoomElement
-import Qt5Compat.GraphicalEffects
+import Fk.Components.LunarLTK
+import Fk.Pages.LunarLTK
+import Fk.Components.Common
 
 GraphicsBox {
   id: root
@@ -72,7 +72,7 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (config.enableFreeAssign)
+            if (Config.enableFreeAssign)
               roomScene.startCheat("FreeAssign", { card: this });
           }
           
@@ -100,7 +100,7 @@ GraphicsBox {
         id: convertBtn
         visible: false
         enabled: false
-        text: luatr("Same General Convert")
+        text: Lua.tr("Same General Convert")
         onClicked: {
           cheatLoader.sourceComponent = Qt.createComponent("./SameConvertFrame.qml");
           cheatLoader.item.extra_data = { cards: generals };
@@ -111,7 +111,7 @@ GraphicsBox {
       MetroButton {
         id: buttonConfirm
         width: 120
-        text: luatr("OK")
+        text: Lua.tr("OK")
         enabled: selectedItem.length == num
 
         onClicked: {
@@ -126,7 +126,7 @@ GraphicsBox {
       MetroButton {
         id: buttonDetail
         enabled: selectedItem.length
-        text: luatr("Show General Detail")
+        text: Lua.tr("Show General Detail")
         onClicked: roomScene.startCheat(
           "GeneralDetail",
           { generals: selectedItem.map(id => generalRepeater.itemAt(id).name) }
@@ -145,7 +145,7 @@ GraphicsBox {
     [generals, num, my_selected, ur_selected, prompt, no_convert] = data;
     for (var i = 0; i < generals.length; i++) {
       let generalName = generals[i]
-      if (!no_convert && !my_selected.includes(i) && !ur_selected.includes(i) && lcall("GetSameGenerals", generalName).length) {
+      if (!no_convert && !my_selected.includes(i) && !ur_selected.includes(i) && Lua.call("GetSameGenerals", generalName).length) {
         convertBtn.visible = true;
         convertBtn.enabled = true;
         break;

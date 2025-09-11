@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
-import Fk.Pages
-import Fk.RoomElement
+import Fk
+import Fk.Components.LunarLTK
+import Fk.Pages.LunarLTK
+import Fk.Components.Common
 
 GraphicsBox {
   id: root
@@ -39,7 +41,7 @@ GraphicsBox {
           height: 100
           text: "队友"
           color: "white"
-          font.family: fontLibian.name
+          font.family: Config.libianName
           font.pixelSize: 18
           style: Text.Outline
           wrapMode: Text.WordWrap
@@ -110,7 +112,7 @@ GraphicsBox {
           height: 100
           text: "你"
           color: "white"
-          font.family: fontLibian.name
+          font.family: Config.libianName
           font.pixelSize: 18
           style: Text.Outline
           wrapMode: Text.WordWrap
@@ -138,7 +140,7 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (config.enableFreeAssign)
+            if (Config.enableFreeAssign)
               roomScene.startCheat("FreeAssign", { card: this });
           }
 
@@ -169,7 +171,7 @@ GraphicsBox {
         id: convertBtn
         // visible: !convertDisabled
         enabled: false
-        text: luatr("Same General Convert")
+        text: Lua.tr("Same General Convert")
         onClicked: {
           cheatLoader.sourceComponent = Qt.createComponent("./SameConvertFrame.qml");
           cheatLoader.item.extra_data = { cards: my_cards };
@@ -180,7 +182,7 @@ GraphicsBox {
 
       MetroButton {
         id: fightButton
-        text: luatr("Fight")
+        text: Lua.tr("Fight")
         width: 120
         height: 35
         enabled: root.selected !== ""
@@ -196,7 +198,7 @@ GraphicsBox {
       MetroButton {
         id: detailBtn
         enabled: root.selected !== ""
-        text: luatr("Show General Detail")
+        text: Lua.tr("Show General Detail")
         onClicked: roomScene.startCheat(
           "GeneralDetail",
           { generals: [root.selected] }
@@ -207,12 +209,12 @@ GraphicsBox {
 
   function loadData(data) {
     root.title.text = ("你的座次是 %1 , 请选择")
-      .arg(luatr("seat#" + roomScene.getPhoto(Self.id).seatNumber))
+      .arg(Lua.tr("seat#" + roomScene.getPhoto(Self.id).seatNumber))
     root.friend_cards = data.friend;
     root.my_cards = data.me;
 
     for (let generalName of data.me) {
-      if (lcall("GetSameGenerals", generalName).length > 0) {
+      if (Lua.call("GetSameGenerals", generalName).length > 0) {
         convertBtn.enabled = true;
         break;
       }
