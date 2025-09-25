@@ -22,7 +22,7 @@ shuailing:addEffect(fk.EventPhaseStart, {
     local judge = {
       who = target,
       reason = shuailing.name,
-      pattern = ".|.|spade,club",
+      pattern = ".|.|black",
     }
     room:judge(judge)
     if not target.dead and judge:matchPattern() and room:getCardArea(judge.card) == Card.DiscardPile then

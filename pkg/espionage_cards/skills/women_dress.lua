@@ -18,7 +18,7 @@ skill:addEffect(fk.TargetConfirmed, {
     local judge = {
       who = player,
       reason = skill.name,
-      pattern = ".|.|spade,club",
+      pattern = ".|.|black",
     }
     room:judge(judge)
     if judge:matchPattern() then

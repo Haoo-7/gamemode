@@ -18,7 +18,7 @@ skill:addEffect("cardskill", {
     local judge = {
       who = to,
       reason = "paranoid",
-      pattern = ".|.|spade,heart,diamond",
+      pattern = ".|.|^club",
     }
     room:judge(judge)
     if judge:matchPattern() then
