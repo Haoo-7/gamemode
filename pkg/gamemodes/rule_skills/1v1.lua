@@ -139,7 +139,7 @@ rule:addEffect(fk.BuryVictim, {
     end
     last_event:addCleaner(function()
       local req = Request:new({player}, "AskForGeneral")
-      req.timeout = room.settings.generalTimeout
+      req.timeout = room:getSettings('generalTimeout')
       req:setData(player, { generals, 1 })
       req:setDefaultReply(player, { generals[1] })
       req:ask()

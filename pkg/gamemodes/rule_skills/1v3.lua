@@ -36,7 +36,7 @@ rule:addEffect(fk.BeforeGameOverJudge, {
   end,
   on_refresh = function (self, event, target, player, data)
     local room = player.room
-    local n = room.settings.enableDeputy and 2 or 1
+    local n = room:getSettings('enableDeputy') and 2 or 1
     player._splayer:setDied(false)
     if n == 1 then
       room:setPlayerRest(player, 4)

@@ -62,7 +62,7 @@ rule:addEffect(fk.GameOverJudge, {
     local room = player.room
     room:setTag("SkipGameRule", true)
     if #room.alive_players == 1 then
-      local winner = Fk.game_modes[room.settings.gameMode]:getWinner(player)
+      local winner = Fk.game_modes[room:getSettings('gameMode')]:getWinner(player)
       if winner ~= "" then
         room:gameOver(winner)
       end

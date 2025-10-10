@@ -30,7 +30,7 @@ local m_1v2_getLogic = function()
 
   function m_1v2_logic:chooseGenerals()
     local room = self.room ---@type Room
-    local generalNum = room.settings.generalNum
+    local generalNum = room:getSettings('generalNum')
     for _, p in ipairs(room.players) do
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
@@ -42,7 +42,7 @@ local m_1v2_getLogic = function()
     -- 地主多发俩武将
     local generals = room:getNGenerals(#players * generalNum + 2)
     local req = Request:new(players, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     for i, p in ipairs(players) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       if p.role == "lord" then

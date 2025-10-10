@@ -137,8 +137,8 @@ local vanished_dragon_getLogic = function()
       end
     end
 
-    local generalNum = room.settings.generalNum
-    local n = room.settings.enableDeputy and 2 or 1
+    local generalNum = room:getSettings('generalNum')
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room.players[1] -- room:getLord()
     if lord.id == room:getBanner("ShownLoyalist") then
       for _, p in ipairs(room.players) do
@@ -216,7 +216,7 @@ local vanished_dragon_getLogic = function()
     local generals = table.random(room.general_pile, #nonlord * generalNum)
 
     local req = Request:new(nonlord, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       req:setData(p, { arg, n })

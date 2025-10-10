@@ -88,7 +88,7 @@ local m_2v2_getLogic = function()
 
   function m_2v2_logic:chooseGenerals()
     local room = self.room
-    local generalNum = math.min(room.settings.generalNum, 9)
+    local generalNum = math.min(room:getSettings('generalNum'), 9)
 
     local lord = room:getLord()
     room:setCurrent(lord)
@@ -126,7 +126,7 @@ local m_2v2_getLogic = function()
           me = t4, friend = t1,
         },
       },
-      timeout = self.room.settings.generalTimeout,
+      timeout = self.room:getSettings('generalTimeout'),
     })
     for _, p in ipairs(nonlord) do
       local general = req:getResult(p)

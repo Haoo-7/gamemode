@@ -281,7 +281,7 @@ local m_3v3_getLogic = function()
     chooseGeneral(warm_marshal, 1)
 
     local req = Request:new({cool_marshal, warm_marshal}, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     req:setData(cool_marshal, { cool_generals, 3, true })
     req:setDefaultReply(cool_marshal, table.random(cool_generals, 3))
     req:setData(warm_marshal, { warm_generals, 3, true })

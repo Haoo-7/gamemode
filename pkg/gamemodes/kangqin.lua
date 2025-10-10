@@ -121,8 +121,8 @@ local kangqin_getLogic = function()
 
   function kangqin_logic:chooseGenerals()
     local room = self.room
-    local generalNum = room.settings.generalNum
-    local n = room.settings.enableDeputy and 2 or 1
+    local generalNum = room:getSettings('generalNum')
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room:getLord()
     room:setCurrent(lord)
     -- 询问选将
@@ -130,7 +130,7 @@ local kangqin_getLogic = function()
     local others = room:getNGenerals( 2* generalNum )
     local to_ask = table.filter(room.players, function(p) return p.role ~= "rebel" end)
     local req = Request:new(to_ask, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     req.focus_text = "AskForGeneral"
     for i, p in ipairs(room.players) do
       local arg, count = nil, 0
@@ -167,7 +167,7 @@ local kangqin_getLogic = function()
 
   function kangqin_logic:attachSkillToPlayers()
     local room = self.room
-    local n = room.settings.enableDeputy and 2 or 1
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local players = room.players
     -- 创建技能池
     local skill_pool = {}
@@ -184,7 +184,7 @@ local kangqin_getLogic = function()
     end
     room:setTag("skill_pool", skill_pool)
     -- 选3个技能
-    local num = math.floor(1.5* room.settings.generalNum)
+    local num = math.floor(1.5* room:getSettings('generalNum'))
     local to_ask = table.filter(players, function (p)
       return p.role == "rebel"
     end)

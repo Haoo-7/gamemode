@@ -9,13 +9,13 @@ local role_mode = fk.CreateGameMode{
   logic = function()
     local l = GameLogic:subclass("aab_role_mode_logic")
     function l:run()
-      self.room.settings.enableDeputy = false
+      self.room:getSettings('enableDeputy') = false
       GameLogic.run(self)
     end
 
     function l:chooseGenerals()
       local room = self.room---@type Room
-      local generalNum = room.settings.generalNum
+      local generalNum = room:getSettings('generalNum')
       local lord = room:getLord()
       if not lord then
         local temp = room.players[1]
@@ -58,7 +58,7 @@ local role_mode = fk.CreateGameMode{
       end
 
       local req = Request:new(nonlord, "AskForGeneral")
-      req.timeout = self.room.settings.generalTimeout
+      req.timeout = self.room:getSettings('generalTimeout')
       for i, p in ipairs(nonlord) do
         local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
         req:setData(p, { arg, 1 })

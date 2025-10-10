@@ -26,7 +26,7 @@ chengji:addEffect(fk.Damaged, spec)
 chengji:addEffect(fk.Death, {
   is_delay_effect = true,
   can_trigger = function(self, event, target, player, data)
-    return target == player and #player:getPile(chengji.name) > 0 and player.room.settings.gameMode == "m_1v1_mode"
+    return target == player and #player:getPile(chengji.name) > 0 and player.room:getSettings('gameMode') == "m_1v1_mode"
   end,
   on_cost = Util.TrueFunc,
   on_use = function(self, event, target, player, data)

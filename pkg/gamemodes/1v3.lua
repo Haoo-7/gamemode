@@ -56,8 +56,8 @@ local m_1v3_getLogic = function()
 
   function m_1v3_logic:chooseGenerals()
     local room = self.room ---@type Room
-    local generalNum = room.settings.generalNum
-    local n = room.settings.enableDeputy and 2 or 1
+    local generalNum = room:getSettings('generalNum')
+    local n = room:getSettings('enableDeputy') and 2 or 1
     for _, p in ipairs(room.players) do
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
@@ -216,7 +216,7 @@ local m_1v3_mode = fk.CreateGameMode{
   end,
   reward_punish = function (self, victim, killer)
     local room = victim.room
-    local n = room.settings.enableDeputy and 2 or 1
+    local n = room:getSettings('enableDeputy') and 2 or 1
     for _, p in ipairs(room.alive_players) do
       if p.role == victim.role and not p.dead then
         if n == 2 then

@@ -215,17 +215,17 @@ local jiange_getLogic = function()
     table.shuffle(room.general_pile)
 
     local availableGenerals = {
-      ["wei"] = table.random(generals["wei"], 2 * room.settings.generalNum),
-      ["shu"] = table.random(generals["shu"], 2 * room.settings.generalNum),
+      ["wei"] = table.random(generals["wei"], 2 * room:getSettings('generalNum')),
+      ["shu"] = table.random(generals["shu"], 2 * room:getSettings('generalNum')),
     }
 
     local players = room.players
     local req = Request:new(room.players, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     for i, p in ipairs(players) do
       local arg = {}
       if i % 2 == 1 then --普通武将
-        local n = room.settings.generalNum
+        local n = room:getSettings('generalNum')
         while n > 0 do
           table.insert(arg, table.remove(availableGenerals[p.role]))
           n = n - 1
@@ -265,14 +265,14 @@ local jiange_getLogic = function()
       table.removeOne(generals["shu"], g)
     end
 
-    if room.settings.enableDeputy then
+    if room:getSettings('enableDeputy') then
       availableGenerals = {
-        ["wei"] = table.random(generals["wei"], 4 * room.settings.generalNum),
-        ["shu"] = table.random(generals["shu"], 4 * room.settings.generalNum),
+        ["wei"] = table.random(generals["wei"], 4 * room:getSettings('generalNum')),
+        ["shu"] = table.random(generals["shu"], 4 * room:getSettings('generalNum')),
       }
       for _, p in ipairs(room.players) do
         local arg = {}
-        local n = room.settings.generalNum
+        local n = room:getSettings('generalNum')
         while n > 0 do
           table.insert(arg, table.remove(availableGenerals[p.role]))
           n = n - 1
@@ -305,7 +305,7 @@ local jiange_getLogic = function()
     for _, p in ipairs(room.players) do
       room:broadcastProperty(p, "general")
     end
-    if room.settings.enableDeputy then
+    if room:getSettings('enableDeputy') then
       for _, p in ipairs(room.players) do
         room:broadcastProperty(p, "deputyGeneral")
       end

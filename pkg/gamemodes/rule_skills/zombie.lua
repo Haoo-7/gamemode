@@ -178,7 +178,7 @@ rule:addEffect(fk.Deathed, {
     end
 
     --胜利判定
-    local winner = Fk.game_modes[room.settings.gameMode]:getWinner(player)
+    local winner = Fk.game_modes[room:getSettings('gameMode')]:getWinner(player)
     if winner then
       room:gameOver(winner)
     end

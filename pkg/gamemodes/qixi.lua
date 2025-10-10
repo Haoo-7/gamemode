@@ -190,13 +190,13 @@ local qixi_get_logic = function()
       end
       -- no Bigender & Agender
     end
-    local generalNum = math.min(room.settings.generalNum, #male_generals // #males, #female_generals // #females)
+    local generalNum = math.min(room:getSettings('generalNum'), #male_generals // #males, #female_generals // #females)
     if generalNum < 3 then
       room:sendLog{ type = "#NoGeneralDraw", toast = true }
       room:gameOver("")
     end
 
-    local n = room.settings.enableDeputy and 2 or 1
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room:getLord()
     room:setCurrent(lord)
     lord.role = "hidden"
@@ -206,7 +206,7 @@ local qixi_get_logic = function()
     end
 
     local req = Request:new(nonlord, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     for i, p in ipairs(nonlord) do
       local arg = {}
       local t = (p:getMark("@!qixi_female") > 0) and female_generals or male_generals

@@ -78,8 +78,8 @@ local chaos_getLogic = function()
 
   function chaos_logic:chooseGenerals()
     local room = self.room
-    local generalNum = room.settings.generalNum
-    local n = room.settings.enableDeputy and 2 or 1
+    local generalNum = room:getSettings('generalNum')
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room:getLord()
     room:setCurrent(lord)
     lord.role = self.start_role
@@ -87,7 +87,7 @@ local chaos_getLogic = function()
     local players = room.players
     local generals = room:getNGenerals(#players * generalNum)
     local req = Request:new(players, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     table.shuffle(generals)
     for i, p in ipairs(players) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
