@@ -22,7 +22,6 @@ skill:addEffect("cardskill", {
     for _, id in ipairs(cards) do
       local card = Fk:getCardById(id)
       if card.trueName == "slash" and not player:prohibitUse(card) and not player:isProhibited(to, card) and to:isAlive() then
-        card.skillName = skill.name
         room:useCard({
           card = card,
           from = player,
