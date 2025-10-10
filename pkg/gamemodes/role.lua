@@ -9,7 +9,7 @@ local role_mode = fk.CreateGameMode{
   logic = function()
     local l = GameLogic:subclass("aab_role_mode_logic")
     function l:run()
-      self.room:getSettings('enableDeputy') = false
+      self.room.settings._game.enableDeputy = false
       GameLogic.run(self)
     end
 
