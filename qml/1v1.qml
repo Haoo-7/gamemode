@@ -72,7 +72,7 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (Config.enableFreeAssign)
+            if (Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")'))
               roomScene.startCheat("FreeAssign", { card: this });
           }
           
