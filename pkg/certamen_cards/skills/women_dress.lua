@@ -15,14 +15,15 @@ skill:addEffect(fk.AfterCardsMove, {
     for _, move in ipairs(data) do
       if move.to == player and move.toArea == Card.PlayerEquip then
         for _, info in ipairs(move.moveInfo) do
-          if Fk:getCardById(info.cardId).name == skill.attached_equip then
+          local card = info.virtualEquip or info.beforeCard
+          if card.name == skill.attached_equip then
             return Fk.skills[skill.name]:isEffectable(player)
           end
         end
       end
       if move.from == player then
         for _, info in ipairs(move.moveInfo) do
-          if info.fromArea == Card.PlayerEquip and Fk:getCardById(info.cardId).name == skill.attached_equip then
+          if info.fromArea == Card.PlayerEquip and info.beforeCard.name == skill.attached_equip then
             return Fk.skills[skill.name]:isEffectable(player)
           end
         end
@@ -34,7 +35,7 @@ skill:addEffect(fk.AfterCardsMove, {
     for _, id in ipairs(player:getCardIds("he")) do
       if not player:prohibitDiscard(id) and
         not (table.contains(player:getEquipments(Card.SubtypeArmor), id) and
-        Fk:getCardById(id).name == skill.attached_equip) then
+        (player:getVirtualEquip(id) or Fk:getCardById(id)).name == skill.attached_equip) then
         table.insert(cards, id)
       end
     end
