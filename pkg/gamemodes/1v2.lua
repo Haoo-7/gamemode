@@ -36,7 +36,7 @@ local m_1v2_getLogic = function()
       room:broadcastProperty(p, "role")
     end
 
-    local lord = room:getLord()
+    local lord = room:getLord() --[[@as ServerPlayer]]
     room:setCurrent(lord)
     local players = room.players
     -- 地主多发俩武将

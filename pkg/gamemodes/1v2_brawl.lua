@@ -34,7 +34,7 @@ local ban_skills = {
 }
 
 local brawl_getLogic = function()
-  local brawl_logic = GameLogic:subclass("brawl_logic") ---@class GameLogic
+  local brawl_logic = GameLogic:subclass("brawl_logic")
 
   function brawl_logic:initialize(room)
     GameLogic.initialize(self, room)
@@ -42,14 +42,14 @@ local brawl_getLogic = function()
   end
 
   function brawl_logic:chooseGenerals()
-    local room = self.room ---@type Room
-    -- room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlInitialNotice"))
+    local room = self.room
+    room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlInitialNotice"))
     for _, p in ipairs(room.players) do
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
     end
 
-    local lord = room:getLord()
+    local lord = room:getLord() --[[@as ServerPlayer]]
     room:setCurrent(lord)
     local players = room.players
     local skill_num = room:getSettings('generalNum') -- 技能池数量由选将数决定，农民等于，地主1.5倍（向下取整）
@@ -131,15 +131,29 @@ local brawl_getLogic = function()
     room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlInitialNotice"))
     for _, p in ipairs(room.alive_players) do
       local skills = table.concat(p:getMark("_brawl_skills"), "|")
-      if p.role == "lord" then
+      if p.role == "lord" and room:getSettings("addLordSkill") then
         skills = skills .."|m_feiyang|m_bahu"
       end
-      room:handleAddLoseSkills(p, skills, nil, false)
+      room:handleAddLoseSkills(p, skills, nil, true)
     end
   end
 
   return brawl_logic
 end
+
+local W = require "ui_emu.preferences"
+
+local settings = {
+  W.PreferenceGroup {
+    title = "Brawl Additional Rule",
+
+    W.SwitchRow {
+      _settingsKey = "addLordSkill",
+      title = "Add lord skill",
+    },
+
+  },
+}
 
 local brawl_mode = fk.CreateGameMode{
   name = "brawl_mode",
@@ -148,6 +162,7 @@ local brawl_mode = fk.CreateGameMode{
   main_mode = "1v2_mode",
   rule = "#1v2_brawl&",
   logic = brawl_getLogic,
+  ui_settings = settings,
   surrender_func = function(self, playedTime)
     local surrenderJudge = { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
     if Self.role ~= "lord" then
@@ -195,8 +210,11 @@ Fk:loadTranslationTable{
   ["#brawl-choose"] = "请选择%arg个技能出战",
   ["@brawl_skills"] = "",
 
-  ["#BrawlInitialNotice"] = "农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）",
+  ["#BrawlInitialNotice"] = "农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）<br>地主技能用<b>创房模式设置</b>开关控制，默认关闭",
   ["#BrawlBanSpecialGeneral"] = "特殊武将被强制替换",
+
+  ["Brawl Additional Rule"] = "1v2大乱斗附加规则",
+  ["Add lord skill"] = "地主拥有〖飞扬〗、〖跋扈〗",
 }
 
 return brawl_mode

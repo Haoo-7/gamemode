@@ -63,7 +63,7 @@ local m_1v3_getLogic = function()
       room:broadcastProperty(p, "role")
     end
 
-    local lord = room:getLord()
+    local lord = room:getLord() --[[@as ServerPlayer]]
     room:setCurrent(lord)
     for _, p in ipairs(room.players) do
       local general, deputy

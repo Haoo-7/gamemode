@@ -57,7 +57,7 @@ local desc_chaos = [[
 ]]
 
 local chaos_getLogic = function()
-  local chaos_logic = GameLogic:subclass("chaos_logic") ---@class GameLogic
+  local chaos_logic = GameLogic:subclass("chaos_logic")
 
   function chaos_logic:assignRoles()
     local room = self.room

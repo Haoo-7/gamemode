@@ -98,7 +98,7 @@ local function getSkills(room, num)
 end
 
 local kangqin_getLogic = function()
-  local kangqin_logic = GameLogic:subclass("kangqin_logic") ---@class GameLogic
+  local kangqin_logic = GameLogic:subclass("kangqin_logic")
 
   function kangqin_logic:initialize(room)
     GameLogic.initialize(self, room)

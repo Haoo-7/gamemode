@@ -119,7 +119,7 @@ local jiange_desc = [[
 ]]
 
 local jiange_getLogic = function()
-  local jiange_logic = GameLogic:subclass("jiange_logic") ---@class GameLogic
+  local jiange_logic = GameLogic:subclass("jiange_logic")
 
   function jiange_logic:initialize(room)
     GameLogic.initialize(self, room)

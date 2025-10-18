@@ -145,7 +145,7 @@ local m_3v3_desc = [[
 ]]
 
 local m_3v3_getLogic = function()
-  local m_3v3_logic = GameLogic:subclass("m_3v3_logic") ---@class GameLogic
+  local m_3v3_logic = GameLogic:subclass("m_3v3_logic")
 
   function m_3v3_logic:initialize(room)
     GameLogic.initialize(self, room)
