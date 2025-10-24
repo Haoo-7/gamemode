@@ -20,7 +20,7 @@ gongdou:addEffect(fk.CardUseFinished, {
   can_trigger = function(self, event, target, player, data)
     return player:hasSkill(self) and isCouple(target, player) and
       player:usedSkillTimes(gongdou.name, Player.HistoryTurn) == 0 and
-      data.card.trueName == "slash" and not data.card:isVirtual() and
+      data.card.trueName == "slash" and not data.card:isConverted() and
       table.find(data.tos, function (p)
         return not p.dead and player:canUseTo(Fk:cloneCard("slash"), p, { bypass_distances=true, bypass_times = true })
       end)
