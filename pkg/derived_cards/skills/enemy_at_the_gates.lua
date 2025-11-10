@@ -33,6 +33,7 @@ skill:addEffect("cardskill", {
           from = player,
           tos = {to},
           extraUse = true,
+          extra_data = { useByEnemyAtGate = true },
         })
       end
     end
