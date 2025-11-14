@@ -10,7 +10,7 @@ Fk:loadTranslationTable{
   ["#present_skill&"] = "将一张有“赠”标记的牌赠予其他角色",
 }
 
-local U = require "packages/utility/utility"
+local U = require "packages.utility.utility"
 
 skill:addEffect("active", {
   anim_type = "support",

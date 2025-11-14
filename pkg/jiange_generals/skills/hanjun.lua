@@ -11,7 +11,7 @@ Fk:loadTranslationTable{
   ["jiange__hanjun_non_equip"] = "非装备牌",
 }
 
-local U = require "packages/utility/utility"
+local U = require "packages.utility.utility"
 
 hanjun:addEffect("active", {
   anim_type = "control",

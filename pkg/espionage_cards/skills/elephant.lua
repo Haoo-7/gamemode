@@ -8,7 +8,7 @@ Fk:loadTranslationTable{
   ["#elephant_skill"] = "战象",
 }
 
-local U = require "packages/utility/utility"
+local U = require "packages.utility.utility"
 
 skill:addEffect(U.BeforePresentCard, {
   can_trigger = function (self, event, target, player, data)

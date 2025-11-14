@@ -2,7 +2,7 @@ local hidden_skill = fk.CreateSkill {
   name = "hidden_skill&"
 }
 
-local U = require "packages/utility/utility"
+local U = require "packages.utility.utility"
 
 Fk:loadTranslationTable{
   ["hidden_skill&"] = "隐匿",
