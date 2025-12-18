@@ -68,10 +68,8 @@ local chaos_getLogic = function()
       p.role = "hidden"
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
-      --p.role = p._splayer:getScreenName() --结算显示更好，但身份图标疯狂报错
     end
 
-    self.start_role = "hidden"
     -- for adjustSeats
     room.players[1].role = "lord"
   end
@@ -82,7 +80,7 @@ local chaos_getLogic = function()
     local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room:getLord()
     room:setCurrent(lord)
-    lord.role = self.start_role
+    lord.role = "hidden"
 
     local players = room.players
     local generals = room:getNGenerals(#players * generalNum)
@@ -119,7 +117,7 @@ end
 local chaos_mode = fk.CreateGameMode{
   name = "chaos_mode",
   minPlayer = 6,
-  maxPlayer = 8,
+  maxPlayer = 10,
   rule = "#chaos_rule&",
   logic = chaos_getLogic,
   surrender_func = function(self, playedTime)
@@ -139,7 +137,12 @@ local chaos_mode = fk.CreateGameMode{
       return not p.surrendered and not (p.dead and p.rest == 0)
     end)
     if #alive > 1 then return "" end
-    alive[1].role = "renegade" --生草
+    room:setPlayerProperty(alive[1], "role", "renegade") --生草
+    for _, p in ipairs(room.players) do
+      if p ~= alive[1] then
+        room:setPlayerProperty(p, "role", "rebel")
+      end
+    end
     return "renegade"
   end,
   build_draw_pile = function(self)
