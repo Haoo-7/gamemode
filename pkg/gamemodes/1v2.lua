@@ -71,6 +71,11 @@ local m_1v2_getLogic = function()
     for _, p in ipairs(players) do
       room:broadcastProperty(p, "general")
     end
+
+    if room:getSettings("buddyRebel") then
+      room.players[2]:addBuddy(room.players[3])
+      room.players[3]:addBuddy(room.players[2])
+    end
   end
 
 
@@ -96,7 +101,14 @@ local m_1v2_getLogic = function()
         addRoleModSkills(p, s)
       end
       if p.role == "lord" then
-        room:handleAddLoseSkills(p, "m_feiyang|m_bahu", nil, false)
+        local skills = "m_feiyang|m_bahu"
+        if room:getSettings("enableQiangyi") then
+          skills = skills .. "|m_qiangyi"
+        end
+        if room:getSettings("enableShiqiang") then
+          skills = skills .. "|m_shiqiang"
+        end
+        room:handleAddLoseSkills(p, skills, nil, false)
       end
     end
   end
@@ -131,7 +143,7 @@ local m_1v2_mode = fk.CreateGameMode{
   end,
   reward_punish = function (self, victim, killer)
     local room = victim.room
-    if victim.role == "rebel" then
+    if victim.role == "rebel" and not room:getSettings("noRebelReward") then
       for _, p in ipairs(room:getOtherPlayers(victim)) do
         if p.role == "rebel" then
           local choices = {"draw2", "Cancel"}
@@ -158,6 +170,37 @@ local m_1v2_mode = fk.CreateGameMode{
   end,
 }
 
+local W = require "ui_emu.preferences"
+m_1v2_mode.ui_settings = {
+  W.PreferenceGroup {
+    title = "m_1v2_enhance_lord",
+
+    W.SwitchRow {
+      _settingsKey = "enableQiangyi",
+      title = "m_1v2_lord_getqiangyi",
+    },
+
+    W.SwitchRow {
+      _settingsKey = "enableShiqiang",
+      title = "m_1v2_lord_getshiqiang",
+    },
+
+    W.SwitchRow {
+      _settingsKey = "noRebelReward",
+      title = "m_1v2_no_reward",
+    },
+  },
+
+  W.PreferenceGroup {
+    title = "m_1v2_enhance_rebel",
+
+    W.SwitchRow {
+      _settingsKey = "buddyRebel",
+      title = "m_1v2_rebel_buddy",
+    },
+  },
+}
+
 Fk:loadTranslationTable{
   ["m_1v2_mode"] = "欢乐斗地主",
   [":m_1v2_mode"] = desc_1v2,
@@ -166,6 +209,18 @@ Fk:loadTranslationTable{
 
   ["time limitation: 2 min"] = "游戏时长达到2分钟",
   ["1v2: left you alive"] = "仅剩你和地主存活",
+
+  ["m_1v2_enhance_lord"] = "地主增强",
+  ["m_1v2_lord_getqiangyi"] = "地主专属技能〖强易〗",
+  ["help: m_1v2_lord_getqiangyi"] = "(比赛服) 每人限一次，获得其一张手牌并交还一张",
+  ["m_1v2_lord_getshiqiang"] = "地主专属技能〖恃强〗",
+  ["help: m_1v2_lord_getshiqiang"] = "(手杀巅峰赛) 可印杀并摸一，未杀中则自己减上限",
+  ["m_1v2_no_reward"] = "农民无队友阵亡补偿",
+  ["help: m_1v2_no_reward"] = "(新服) 农民阵亡后，存活角色没有回血或摸牌的补偿",
+
+  ["m_1v2_enhance_rebel"] = "农民增强",
+  ["m_1v2_rebel_buddy"] = "农民卡牌互通",
+  ["help: m_1v2_rebel_buddy"] = "(OL, 新服) 农民可以看到彼此的手牌",
 }
 
 return m_1v2_mode

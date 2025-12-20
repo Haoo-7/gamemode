@@ -137,6 +137,15 @@ local m_2v2_getLogic = function()
     room:askToChooseKingdom(nonlord)
   end
 
+  function m_2v2_logic:attachSkillToPlayers()
+    GameLogic.attachSkillToPlayers(self)
+
+    local room = self.room
+    if room:getSettings("enableLimitFeiyang") then
+      room:handleAddLoseSkills(room.players[4], "m_2v2_feiyang", nil, false)
+    end
+  end
+
   return m_2v2_logic
 end
 
@@ -179,6 +188,19 @@ local m_2v2_mode = fk.CreateGameMode{
     end
   end,
 }
+
+local W = require "ui_emu.preferences"
+m_2v2_mode.ui_settings = {
+  W.PreferenceGroup {
+    title = "Game Rule",
+
+    W.SwitchRow {
+      _settingsKey = "enableLimitFeiyang",
+      title = "m_2v2_limit_feiyang",
+    },
+  },
+}
+
 Fk:loadTranslationTable{
   ["m_2v2_mode"] = "2v2",
   [":m_2v2_mode"] = desc_2v2,
@@ -187,6 +209,10 @@ Fk:loadTranslationTable{
 
   ["time limitation: 2 min"] = "游戏时长达到2分钟",
   ["2v2: left you alive"] = "你所处队伍仅剩你存活",
+
+  ["m_2v2_limit_feiyang"] = "四号位获得〖飞扬〗",
+  ["help: m_2v2_limit_feiyang"] = "(OL) 四号位增加需弃三张手牌的、限定技版的〖飞扬〗",
+  ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置三张手牌，弃置自己判定区的一张牌",
 }
 
 Fk:addMiniGame{
