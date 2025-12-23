@@ -6,9 +6,9 @@ local feiyang = fk.CreateSkill {
 
 Fk:loadTranslationTable{
   ["m_2v2_feiyang"] = "飞扬",
-  [":m_2v2_feiyang"] = "限定技，判定阶段开始时，你可以弃置三张手牌，然后弃置自己判定区的一张牌。",
+  [":m_2v2_feiyang"] = "限定技，判定阶段开始时，你可以弃置两张手牌，然后弃置自己判定区的一张牌。",
 
-  ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置三张手牌，弃置自己判定区的一张牌",
+  ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置两张手牌，弃置自己判定区的一张牌",
 }
 
 feiyang:addEffect(fk.EventPhaseStart, {
@@ -16,13 +16,13 @@ feiyang:addEffect(fk.EventPhaseStart, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(feiyang.name) and player.phase == Player.Judge and
       player:usedSkillTimes(feiyang.name, Player.HistoryGame) == 0 and
-      player:getHandcardNum() >= 3 and #player:getCardIds("j") > 0
+      player:getHandcardNum() >= 2 and #player:getCardIds("j") > 0
   end,
   on_cost = function (self, event, target, player, data)
     local room = player.room
     local cards = room:askToDiscard(player, {
-      min_num = 3,
-      max_num = 3,
+      min_num = 2,
+      max_num = 2,
       include_equip = false,
       skill_name = feiyang.name,
       prompt = "#m_2v2_feiyang-invoke",

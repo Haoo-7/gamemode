@@ -211,8 +211,8 @@ Fk:loadTranslationTable{
   ["2v2: left you alive"] = "你所处队伍仅剩你存活",
 
   ["m_2v2_limit_feiyang"] = "四号位获得〖飞扬〗",
-  ["help: m_2v2_limit_feiyang"] = "(OL) 四号位增加需弃三张手牌的、限定技版的〖飞扬〗",
-  ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置三张手牌，弃置自己判定区的一张牌",
+  ["help: m_2v2_limit_feiyang"] = "(OL) 四号位增加需弃两张手牌的、限定技版的〖飞扬〗",
+  ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置两张手牌，弃置自己判定区的一张牌",
 }
 
 Fk:addMiniGame{
