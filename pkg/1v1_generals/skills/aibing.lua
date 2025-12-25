@@ -7,7 +7,7 @@ Fk:loadTranslationTable{
   [":v11__aibing"] = "当你死亡时，你可以令你下一名武将登场时视为使用一张【杀】。",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 aibing:addEffect(fk.Death, {
   can_trigger = function(self, event, target, player, data)

@@ -7,7 +7,7 @@ Fk:loadTranslationTable{
   [":v11__xiaoxi"] = "当你登场时，你可以视为使用一张【杀】。",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 xiaoxi:addEffect(U.Debut, {
   can_trigger = function (self, event, target, player, data)

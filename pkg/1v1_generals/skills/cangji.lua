@@ -7,7 +7,7 @@ Fk:loadTranslationTable{
   [":v11__cangji"] = "当你死亡时，你可以将你装备区里的所有牌移出游戏，然后你的下一名武将登场时将这些牌置入你的装备区。",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 cangji:addEffect(fk.Death, {
   can_trigger = function(self, event, target, player, data)

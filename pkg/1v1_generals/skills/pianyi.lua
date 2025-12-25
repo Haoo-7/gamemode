@@ -11,7 +11,7 @@ Fk:loadTranslationTable{
   ["$v11__pianyi2"] = "将军看呆了吗？",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 pianyi:addEffect(U.Debut, {
   anim_type = "control",

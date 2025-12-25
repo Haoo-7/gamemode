@@ -11,7 +11,7 @@ Fk:loadTranslationTable{
   ["#v11__hunbi_exile"] = "对对手执行两次流放",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 hunbi:addEffect(fk.Death, {
   can_trigger = function(self, event, target, player, data)

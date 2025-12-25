@@ -2,7 +2,7 @@ local rule = fk.CreateSkill {
   name = "#m_1v1_rule&",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 --登场
 rule:addEffect(fk.GameStart, {

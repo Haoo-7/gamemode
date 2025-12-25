@@ -10,7 +10,7 @@ Fk:loadTranslationTable{
   ["$v11__huwei2"] = "来人，引水对敌！",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 huwei:addEffect(U.Debut, {
   can_trigger = function (self, event, target, player, data)

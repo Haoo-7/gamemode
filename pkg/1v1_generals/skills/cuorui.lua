@@ -11,7 +11,7 @@ Fk:loadTranslationTable{
   ["$v11__cuorui2"] = "今日就让你见识见识老牛的厉害！",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 cuorui:addEffect(U.Debut, {
   anim_type = "drawcard",

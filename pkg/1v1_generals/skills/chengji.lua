@@ -8,7 +8,7 @@ Fk:loadTranslationTable{
   "你死亡后，你的下一名武将登场时获得所有“城棘”牌。",
 }
 
-local U = require "packages/gamemode/pkg/1v1_generals/1v1_util"
+local U = require "packages.gamemode.pkg.1v1_generals.1v1_util"
 
 local spec = {
   anim_type = "masochism",
