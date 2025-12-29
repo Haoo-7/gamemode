@@ -29,7 +29,7 @@ feiyang:addEffect(fk.EventPhaseStart, {
       cancelable = true,
       skip = true,
     })
-    if #cards == 3 then
+    if #cards == 2 then
       event:setCostData(self, {cards = cards})
       return true
     end
