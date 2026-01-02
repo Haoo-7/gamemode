@@ -123,7 +123,7 @@ local m_1v2_mode = fk.CreateGameMode{
   main_mode = "1v2_mode",
   logic = m_1v2_getLogic,
   surrender_func = function(self, playedTime)
-    local surrenderJudge = { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
+    local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 } }
     if Self.role ~= "lord" then
       table.insert(surrenderJudge, {
         text = "1v2: left you alive",
@@ -207,7 +207,7 @@ Fk:loadTranslationTable{
 
   ["PickLegacy"] = "挑选遗产",
 
-  ["time limitation: 2 min"] = "游戏时长达到2分钟",
+  ["time limitation: 1 min"] = "游戏时长达到1分钟",
   ["1v2: left you alive"] = "仅剩你和地主存活",
 
   ["m_1v2_enhance_lord"] = "地主增强",

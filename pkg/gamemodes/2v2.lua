@@ -157,7 +157,7 @@ local m_2v2_mode = fk.CreateGameMode{
   logic = m_2v2_getLogic,
   main_mode = "2v2_mode",
   surrender_func = function(self, playedTime)
-    local surrenderJudge = { { text = "time limitation: 2 min", passed = playedTime >= 120 },
+    local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
     { text = "2v2: left you alive", passed = table.find(Fk:currentRoom().players, function(p)
       return p.role == Self.role and p.dead and p.rest == 0
     end) and true } }
@@ -207,7 +207,7 @@ Fk:loadTranslationTable{
 
   ["#m_2v2_choose_buddy"] = "请房主选择自己的队友",
 
-  ["time limitation: 2 min"] = "游戏时长达到2分钟",
+  ["time limitation: 1 min"] = "游戏时长达到1分钟",
   ["2v2: left you alive"] = "你所处队伍仅剩你存活",
 
   ["m_2v2_limit_feiyang"] = "四号位获得〖飞扬〗",
