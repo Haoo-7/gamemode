@@ -144,6 +144,7 @@ local floating_thunder = fk.CreateCard{
   type = Card.TypeTrick,
   sub_type = Card.SubtypeDelayedTrick,
   skill = "floating_thunder_skill",
+  damage_type = fk.ThunderDamage,
 }
 Fk:loadTranslationTable{
   ["floating_thunder"] = "浮雷",

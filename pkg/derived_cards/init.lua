@@ -27,6 +27,7 @@ local honey_trap = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "honey_trap_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 extension:addCardSpec("honey_trap")
 Fk:loadTranslationTable{
@@ -40,6 +41,7 @@ local daggar_in_smile = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "daggar_in_smile_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 extension:addCardSpec("daggar_in_smile")
 Fk:loadTranslationTable{
@@ -122,6 +124,7 @@ local raid_and_frontal_attack = fk.CreateCard{
   name = "&raid_and_frontal_attack",
   type = Card.TypeTrick,
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
   skill = "raid_and_frontal_attack_skill",
 }
 Fk:loadTranslationTable{

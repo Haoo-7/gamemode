@@ -75,6 +75,7 @@ local stab__slash = fk.CreateCard{
   type = Card.TypeBasic,
   skill = "stab__slash_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 Fk:loadTranslationTable{
   ["stab__slash"] = "刺杀",
@@ -154,6 +155,7 @@ local looting = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "looting_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 Fk:loadTranslationTable{
   ["looting"] = "趁火打劫",

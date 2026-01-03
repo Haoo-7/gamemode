@@ -206,6 +206,7 @@ local ice__slash = fk.CreateCard{
   type = Card.TypeBasic,
   skill = "ice__slash_skill",
   is_damage_card = true,
+  damage_type = fk.IceDamage,
 }
 Fk:loadTranslationTable{
   ["ice__slash"] = "冰杀",
@@ -225,6 +226,7 @@ local drowning = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "drowning_skill",
   is_damage_card = true,
+  damage_type = fk.ThunderDamage,
 }
 Fk:loadTranslationTable{
   ["drowning"] = "水淹七军",
@@ -242,6 +244,7 @@ local unexpectation = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "unexpectation_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 Fk:loadTranslationTable{
   ["unexpectation"] = "出其不意",
