@@ -10,49 +10,53 @@ skill:addEffect("cardskill", {
   can_use = Util.FalseFunc,
 })
 
-skill:addEffect(fk.BeforeCardsMove, {
-  global = true,
-  can_refresh = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.from == player then
+local spec = {
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local ids = event:getCostData(self).cards
+    local result = room:askToYiji(player, {
+      cards = ids,
+      targets = room:getOtherPlayers(player, false),
+      skill_name = "",
+      min_num = 0,
+      max_num = #ids,
+      prompt = "#es__poison-give",
+      skip = true,
+    })
+    for _, cards in pairs(result) do
+      if #cards > 0 then
+        event:setCostData(self, {extra_data = result})
         return true
       end
     end
   end,
-  on_refresh = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.from == player and move.skillName ~= "es__poison_give" and move.skillName ~= "scrape_poison_skill" then
-        for _, info in ipairs(move.moveInfo) do
-          if info.fromArea == Card.PlayerHand and
-            (move.moveVisible or table.contains({Card.PlayerEquip, Card.Processing, Card.DiscardPile}, move.toArea)) then
-            if Fk:getCardById(info.cardId, false).name == "es__poison" then
-              move.extra_data = move.extra_data or {}
-              local dat = move.extra_data.es__poison or {}
-              table.insert(dat, player.id)
-              move.extra_data.es__poison = dat
-            end
-          end
-        end
-      end
-    end
+  on_use = function(self, event, target, player, data)
+    player.room:doYiji(event:getCostData(self).extra_data, player, "es__poison_give")
   end,
-})
+}
 
 skill:addEffect(fk.AfterCardsMove, {
   global = true,
   priority = 0.001,
   mute = true,
   can_trigger = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.extra_data and move.extra_data.es__poison then
-        if table.contains(move.extra_data.es__poison, player.id) and not player.dead then
-          return true
+    if not player.dead then
+      for _, move in ipairs(data) do
+        if move.from == player and move.skillName ~= "es__poison_give" and move.skillName ~= "scrape_poison_skill" then
+          for _, info in ipairs(move.moveInfo) do
+            if info.fromArea == Card.PlayerHand and info.beforeCard.name == "es__poison" and
+              (move.moveVisible or
+              table.contains({ Card.PlayerEquip, Card.Processing, Card.DiscardPile, Card.Void }, move.toArea)) then
+              return true
+            end
+          end
         end
-      end
-      if move.to == player and move.toArea == Card.PlayerHand and move.moveReason == fk.ReasonDraw then
-        for _, info in ipairs(move.moveInfo) do
-          if Fk:getCardById(info.cardId).name == "es__poison" then
-            return true
+        if move.to == player and move.toArea == Card.PlayerHand and move.moveReason == fk.ReasonDraw then
+          for _, info in ipairs(move.moveInfo) do
+            if Fk:getCardById(info.cardId).name == "es__poison" and
+              table.contains(player:getCardIds("h"), info.cardId) then
+              return true
+            end
           end
         end
       end
@@ -62,14 +66,19 @@ skill:addEffect(fk.AfterCardsMove, {
     local n = 0
     local ids = {}
     for _, move in ipairs(data) do
-      if move.extra_data and move.extra_data.es__poison then
-        n = n + #table.filter(move.extra_data.es__poison, function(id)
-          return id == player.id
-        end)
+      if move.from == player and move.skillName ~= "es__poison_give" and move.skillName ~= "scrape_poison_skill" then
+        for _, info in ipairs(move.moveInfo) do
+          if info.fromArea == Card.PlayerHand and info.beforeCard.name == "es__poison" and
+            (move.moveVisible or
+            table.contains({ Card.PlayerEquip, Card.Processing, Card.DiscardPile, Card.Void }, move.toArea)) then
+            n = n + 1
+          end
+        end
       end
       if move.to == player and move.toArea == Card.PlayerHand then
         for _, info in ipairs(move.moveInfo) do
-          if Fk:getCardById(info.cardId).name == "es__poison" then
+          if Fk:getCardById(info.cardId).name == "es__poison" and
+            table.contains(player:getCardIds("h"), info.cardId) then
             table.insertIfNeed(ids, info.cardId)
           end
         end
@@ -88,27 +97,28 @@ skill:addEffect(fk.AfterCardsMove, {
       self:doCost(event, nil, player, ids)
     end
   end,
-  on_cost = function(self, event, target, player, data)
-    local room = player.room
-    local result = room:askToYiji(player, {
-      cards = event:getCostData(self).cards,
-      targets = room:getOtherPlayers(player, false),
-      skill_name = "",
-      min_num = 0,
-      max_num = 1,
-      prompt = "#es__poison-give",
-      skip = true,
-    })
-    for _, cards in pairs(result) do
+  on_cost = spec.on_cost,
+  on_use = spec.on_use,
+})
+
+skill:addEffect(fk.AfterDrawInitialCards, {
+  global = true,
+  priority = 0.001,
+  mute = true,
+  can_trigger = function(self, event, target, player, data)
+    if target == player and #player.room:getOtherPlayers(player, false) > 0 then
+      local cards = table.filter(data.cards, function (id)
+        return table.contains(player:getCardIds("h"), id) and
+          Fk:getCardById(id).name == "es__poison"
+      end)
       if #cards > 0 then
-        event:setCostData(self, {extra_data = result})
+        event:setCostData(self, { cards = cards })
         return true
       end
     end
   end,
-  on_use = function(self, event, target, player, data)
-    player.room:doYiji(event:getCostData(self).extra_data, player, "es__poison_give")
-  end,
+  on_cost = spec.on_cost,
+  on_use = spec.on_use,
 })
 
 return skill

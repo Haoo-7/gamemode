@@ -93,6 +93,7 @@ local function drawInit(room, player, n, fix_ids)
     room:setCardArea(id, Card.PlayerHand, player.id)
   end
   room:syncDrawPile()
+  return cardIds
 end
 
 local function removeGeneral(generals, g)
@@ -164,7 +165,7 @@ rule:addEffect(fk.BuryVictim, {
       room:setPlayerProperty(player, "hp", Fk.generals[g].hp)
       local draw_data = DrawInitialData:new{ num = math.min(player.maxHp, 5) }
       room.logic:trigger(fk.DrawInitialCards, player, draw_data)
-      drawInit(room, player, math.min(player.maxHp, 5))
+      draw_data.cards = drawInit(room, player, math.min(player.maxHp, 5))
       room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
       room.logic:trigger(U.Debut, player, player.general, false)
     end)

@@ -12,35 +12,7 @@ skill:addEffect("cardskill", {
   end,
   on_effect = function(self, room, effect)
     if effect.to.dead then return end
-    room:loseHp(effect.to, 1, "poison")
-  end,
-})
-
-skill:addEffect(fk.BeforeCardsMove, {
-  global = true,
-  can_refresh = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.from == player then
-        return true
-      end
-    end
-  end,
-  on_refresh = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.from == player and move.skillName ~= "scrape_poison_skill" and move.moveReason ~= fk.ReasonUse then
-        for _, info in ipairs(move.moveInfo) do
-          if info.fromArea == Card.PlayerHand and
-            (move.moveVisible or table.contains({Card.PlayerEquip, Card.Processing, Card.DiscardPile}, move.toArea)) then
-            if Fk:getCardById(info.cardId, false).name == "poison" then
-              move.extra_data = move.extra_data or {}
-              local dat = move.extra_data.poison or {}
-              table.insert(dat, player.id)
-              move.extra_data.poison = dat
-            end
-          end
-        end
-      end
-    end
+    room:loseHp(effect.to, 1, "poison", effect.from)
   end,
 })
 
@@ -49,10 +21,16 @@ skill:addEffect(fk.AfterCardsMove, {
   priority = 0.001,
   mute = true,
   can_trigger = function(self, event, target, player, data)
-    for _, move in ipairs(data) do
-      if move.extra_data and move.extra_data.poison then
-        if table.contains(move.extra_data.poison, player.id) and not player.dead then
-          return true
+    if not player.dead then
+      for _, move in ipairs(data) do
+        if move.from == player and move.skillName ~= "scrape_poison_skill" and move.moveReason ~= fk.ReasonUse then
+          for _, info in ipairs(move.moveInfo) do
+            if info.fromArea == Card.PlayerHand and info.beforeCard.name == "poison" and
+              (move.moveVisible or
+              table.contains({ Card.PlayerEquip, Card.Processing, Card.DiscardPile, Card.Void }, move.toArea)) then
+              return true
+            end
+          end
         end
       end
     end
@@ -60,11 +38,15 @@ skill:addEffect(fk.AfterCardsMove, {
   on_trigger = function(self, event, target, player, data)
     local n = 0
     for _, move in ipairs(data) do
-      if move.extra_data and move.extra_data.poison then
-        n = n + #table.filter(move.extra_data.poison, function(id)
-          return id == player.id
-        end)
-      end
+        if move.from == player and move.skillName ~= "scrape_poison_skill" and move.moveReason ~= fk.ReasonUse then
+          for _, info in ipairs(move.moveInfo) do
+            if info.fromArea == Card.PlayerHand and info.beforeCard.name == "poison" and
+              (move.moveVisible or
+              table.contains({ Card.PlayerEquip, Card.Processing, Card.DiscardPile, Card.Void }, move.toArea)) then
+              n = n + 1
+            end
+          end
+        end
     end
     for _ = 1, n, 1 do
       if not player.dead then
@@ -74,15 +56,15 @@ skill:addEffect(fk.AfterCardsMove, {
   end,
 })
 
-skill:addAI({
-  on_use = function(self, logic, effect)
-    self.skill:onUse(logic, effect)
-  end,
-  on_effect = function(self, logic, effect)
-    local target = effect.to
-    logic:loseHp(target, 1, skill.name)
-  end,
-}, "__card_skill")
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 2.0,
+  use_value = -5,
+  use_priority = 3.0,
+
+  on_effect = function (self, logic, effect)
+    logic:loseHp(effect.to, 1, "poison", effect.from)
+  end
+})
 
 skill:addTest(function(room, me)
   local poison = room:printCard("poison")
