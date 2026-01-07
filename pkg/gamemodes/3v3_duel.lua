@@ -204,7 +204,9 @@ local m_3v3_duel_mode = fk.CreateGameMode{
     return winner
   end,
   reward_punish = function (self, victim, killer)
-    killer:drawCards(2, "game_rule")
+    if killer then
+      killer:drawCards(2, "game_rule")
+    end
   end,
 }
 Fk:loadTranslationTable{
