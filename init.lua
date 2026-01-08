@@ -4,7 +4,6 @@ local extension = Package:new("gamemode", Package.SpecialPack)
 
 extension:loadSkillSkelsByPath("./packages/gamemode/pkg/gamemodes/rule_skills")
 
-extension:addGameMode(require "packages.gamemode.pkg.gamemodes.role")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.1v2")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.1v2_brawl")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.2v2")
@@ -16,8 +15,6 @@ extension:addGameMode(require "packages.gamemode.pkg.gamemodes.chaos_mode")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.espionage")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.variation")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.vanished_dragon")
-extension:addGameMode(require "packages.gamemode.pkg.gamemodes.qixi")
-extension:addGameMode(require "packages.gamemode.pkg.gamemodes.zombie_mode")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.kangqin")
 extension:addGameMode(require "packages.gamemode.pkg.gamemodes.jiange")
 

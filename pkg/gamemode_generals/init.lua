@@ -13,13 +13,6 @@ Fk:loadTranslationTable{
   ["chaos"] = "文和乱武",
 }
 
-local zombie = General:new(extension, "zombie", "god", 1)
-zombie.hidden = true
-zombie:addSkills { "paoxiao", "wansha", "zombie_xunmeng", "zombie_zaibian", "zombie_ganran" }
-Fk:loadTranslationTable{
-  ["zombie"] = "僵尸",
-}
-
 local hiddenone = General:new(extension, "hiddenone", "jin", 1)
 hiddenone.hidden = true
 hiddenone.fixMaxHp = 1
