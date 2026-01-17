@@ -145,11 +145,11 @@ local W = require "ui_emu.preferences"
 
 local settings = {
   W.PreferenceGroup {
-    title = "Brawl Additional Rule",
+    title = "brawl_additional_rule",
 
     W.SwitchRow {
       _settingsKey = "addLordSkill",
-      title = "Add lord skill",
+      title = "brawl_add_lord_skill",
     },
 
   },
@@ -213,8 +213,8 @@ Fk:loadTranslationTable{
   ["#BrawlInitialNotice"] = "农民抽取技能数为房间“<b>可选武将数</b>”，地主多拿一半（向下取整）<br>地主技能用<b>创房模式设置</b>开关控制，默认关闭",
   ["#BrawlBanSpecialGeneral"] = "特殊武将被强制替换",
 
-  ["Brawl Additional Rule"] = "1v2大乱斗附加规则",
-  ["Add lord skill"] = "地主拥有〖飞扬〗、〖跋扈〗",
+  ["brawl_additional_rule"] = "1v2大乱斗附加规则",
+  ["brawl_add_lord_skill"] = "地主拥有〖飞扬〗、〖跋扈〗",
 }
 
 return brawl_mode
