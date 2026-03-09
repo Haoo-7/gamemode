@@ -16,7 +16,7 @@ Fk:loadTranslationTable{
 local hiddenone = General:new(extension, "hiddenone", "jin", 1)
 hiddenone.hidden = true
 hiddenone.fixMaxHp = 1
-hiddenone:addSkills { "hidden_skill&" }
+hiddenone:addRelatedSkills { "hidden_skill&" } -- 隐匿者这张武将牌上不应该有技能
 Fk:loadTranslationTable{
   ["hiddenone"] = "隐匿者",
   ["#hiddenone"] = "隐介藏形",
