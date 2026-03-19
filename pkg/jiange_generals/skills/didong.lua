@@ -23,7 +23,7 @@ didong:addEffect(fk.EventPhaseStart, {
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local to = table.random(player:getEnemies())
+    local to = room:tableRandomPick(player:getEnemies())
     room:doIndicate(player, {to})
     to:turnOver()
   end,

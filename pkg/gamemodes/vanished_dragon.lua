@@ -157,7 +157,7 @@ local vanished_dragon_getLogic = function()
 
     if lord ~= nil then
       room:setCurrent(lord)
-      table.insertTable(loyalist_list, table.random(room.general_pile, generalNum))
+      table.insertTable(loyalist_list, room:tableRandomPick(room.general_pile, generalNum))
       local lord_generals = room:askToChooseGeneral(lord, {
         generals = loyalist_list,
         n = n,
@@ -213,14 +213,14 @@ local vanished_dragon_getLogic = function()
     end
 
     local nonlord = room:getOtherPlayers(lord, true)
-    local generals = table.random(room.general_pile, #nonlord * generalNum)
+    local generals = room:tableRandomPick(room.general_pile, #nonlord * generalNum)
 
     local req = Request:new(nonlord, "AskForGeneral")
     req.timeout = self.room:getSettings('generalTimeout')
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       req:setData(p, { arg, n })
-      req:setDefaultReply(p, table.random(arg, n))
+      req:setDefaultReply(p, room:tableRandomPick(arg, n))
     end
 
     for _, p in ipairs(nonlord) do

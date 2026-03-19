@@ -64,11 +64,11 @@ rule:addEffect(fk.GameOverJudge, {
 
 local function drawInit(room, player, n, fix_ids)
   -- TODO: need a new function to call the UI
-  local cardIds = table.random(room.draw_pile, n)
+  local cardIds = room:tableRandomPick(room.draw_pile, n)
   if fix_ids then
-    cardIds = table.random(fix_ids, n)
+    cardIds = room:tableRandomPick(fix_ids, n)
     if #cardIds < n then
-      table.insertTable(cardIds, table.random(room.draw_pile, n - #cardIds))
+      table.insertTable(cardIds, room:tableRandomPick(room.draw_pile, n - #cardIds))
     end
   end
   player:addCards(Player.Hand, cardIds)

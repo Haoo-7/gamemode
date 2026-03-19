@@ -58,9 +58,9 @@ local brawl_getLogic = function()
     local all_generals = Fk:getAllGenerals() -- 允许同名武将
     local i = 0
     for _ = 1, 999 do
-      local general = table.random(all_generals)
+      local general = room:tableRandomPick(all_generals)
       local skills = general:getSkillNameList()
-      local skill = table.random(skills) ---@type string
+      local skill = room:tableRandomPick(skills) ---@type string
       local des = Fk:translate(":" .. skill, "zh_CN")
       if not table.contains(ban_skills, skill) and not table.contains(skill_pool, skill) and
         -- 排除与势力技、性别（女性、男性、同性、异性）、武将牌上的技能有关的技能
@@ -83,7 +83,7 @@ local brawl_getLogic = function()
       local avatar = p._splayer:getAvatar()
       if table.contains(special_generals, avatar) then
         room:doBroadcastNotify("ShowToast", Fk:translate("#BrawlBanSpecialGeneral"))
-        avatar = table.random{ "blank_shibing", "blank_nvshibing" }
+        avatar = room:tableRandomPick{ "blank_shibing", "blank_nvshibing" }
       end
       local avatar_general = Fk.generals[avatar] or Fk.generals["sunce"] or Fk.generals["diaochan"]
       room:setPlayerGeneral(p, avatar_general.name, true)
@@ -108,7 +108,7 @@ local brawl_getLogic = function()
           skills, num, num, "#brawl-choose:::" .. tostring(num), generals
         },
       })
-      req:setDefaultReply(p, table.random(skills, num))
+      req:setDefaultReply(p, room:tableRandomPick(skills, num))
     end
 
     req.focus_text = "AskForGeneral"

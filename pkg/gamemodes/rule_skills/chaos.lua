@@ -304,7 +304,7 @@ rule:addEffect(fk.RoundStart, {
     if index == 1 then
       local online = room:getSettings("modeChoice") == "chaos_mode_online"
       -- 线上随机一人，线下从座位最小的开始
-      local from = online and table.random(room.alive_players) or room:getAlivePlayers()[1]
+      local from = online and room:tableRandomPick(room.alive_players) or room:getAlivePlayers()[1]
       from:broadcastSkillInvoke("luanwu")
       room:notifySkillInvoked(from, "luanwu", "big")
       local targets = room:getAlivePlayers(false)
@@ -382,7 +382,7 @@ rule:addEffect(fk.TurnEnd, {
             return p:canMoveCardIntoEquip(id, false)
           end)
           if #cards > 0 then
-            local id = table.random(cards)
+            local id = room:tableRandomPick(cards)
             room:sendLog{
               type = "#chaos_mode_event_4_log",
               from = p.id,

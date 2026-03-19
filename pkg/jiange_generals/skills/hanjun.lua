@@ -30,7 +30,7 @@ hanjun:addEffect("active", {
     local all_cards = {}
     for _, target in ipairs(targets) do
       if not target.dead and not target:isNude() then
-        local id = table.random(target:getCardIds("he"))
+        local id = room:tableRandomPick(target:getCardIds("he"))
         table.insert(all_cards, id)
         room:throwCard(id, hanjun.name, target, player)
       end

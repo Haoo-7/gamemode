@@ -90,7 +90,7 @@ local function getSkills(room, num)
   local skill_pool = room:getTag("skill_pool")
   if num > #skill_pool then return {} end
   for i = 1, num do
-    local skill = table.random(skill_pool)
+    local skill = room:tableRandomPick(skill_pool)
     table.removeOne(skill_pool, skill)
     table.insert(skills, skill)
   end
@@ -126,7 +126,7 @@ local kangqin_getLogic = function()
     local lord = room:getLord()
     room:setCurrent(lord)
     -- 询问选将
-    local lords, soldiers = table.random(qin_generals, math.max(2, generalNum//3) ), table.simpleClone(qin_soldiers)
+    local lords, soldiers = room:tableRandomPick(qin_generals, math.max(2, generalNum//3) ), table.simpleClone(qin_soldiers)
     local others = room:getNGenerals( 2* generalNum )
     local to_ask = table.filter(room.players, function(p) return p.role ~= "rebel" end)
     local req = Request:new(to_ask, "AskForGeneral")
@@ -148,7 +148,7 @@ local kangqin_getLogic = function()
       end
       if arg then
         req:setData(p, {arg, n})
-        req:setDefaultReply(p, table.random(arg, n))
+        req:setDefaultReply(p, room:tableRandomPick(arg, n))
       end
     end
     -- 设置武将
@@ -197,7 +197,7 @@ local kangqin_getLogic = function()
         path = "packages/utility/qml/ChooseSkillBox.qml",
         data = { choices, 3*n, 3*n, "#kangqin-choose:::" .. tostring(3*n), {} },
       })
-      req:setDefaultReply(p, table.random(choices, n*3))
+      req:setDefaultReply(p, room:tableRandomPick(choices, n*3))
     end
 
     for _, p in ipairs(to_ask) do
@@ -244,7 +244,7 @@ local kangqin_getLogic = function()
       "#kq__zhaoji",
       "#kq__taihou",
     }
-    local story = table.random(storys)
+    local story = room:tableRandomPick(storys)
     room:setBanner("@[:]kq_story", story)
     room:addSkill(story)
   end

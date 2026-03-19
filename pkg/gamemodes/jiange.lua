@@ -197,7 +197,7 @@ local jiange_getLogic = function()
           if general.subkingdom ~= "shu" then
             table.insert(generals["wei"], name)
           else
-            table.insert(generals[table.random({"wei", "shu"})], name)
+            table.insert(generals[room:tableRandomPick({"wei", "shu"})], name)
           end
         elseif general.kingdom == "shu" then
           if general.subkingdom ~= "wei" then
@@ -215,8 +215,8 @@ local jiange_getLogic = function()
     table.shuffle(room.general_pile)
 
     local availableGenerals = {
-      ["wei"] = table.random(generals["wei"], 2 * room:getSettings('generalNum')),
-      ["shu"] = table.random(generals["shu"], 2 * room:getSettings('generalNum')),
+      ["wei"] = room:tableRandomPick(generals["wei"], 2 * room:getSettings('generalNum')),
+      ["shu"] = room:tableRandomPick(generals["shu"], 2 * room:getSettings('generalNum')),
     }
 
     local players = room.players
@@ -267,8 +267,8 @@ local jiange_getLogic = function()
 
     if room:getSettings('enableDeputy') then
       availableGenerals = {
-        ["wei"] = table.random(generals["wei"], 4 * room:getSettings('generalNum')),
-        ["shu"] = table.random(generals["shu"], 4 * room:getSettings('generalNum')),
+        ["wei"] = room:tableRandomPick(generals["wei"], 4 * room:getSettings('generalNum')),
+        ["shu"] = room:tableRandomPick(generals["shu"], 4 * room:getSettings('generalNum')),
       }
       for _, p in ipairs(room.players) do
         local arg = {}

@@ -49,7 +49,7 @@ skill:addEffect("cardskill", {
     elseif num == #cards then
       room:moveCardTo(cards, Card.PlayerHand, from, fk.ReasonJustMove, skill.name, nil, false)
     else
-      local cids = table.random(cards, num)
+      local cids = room:tableRandomPick(cards, num)
       local cids2 = table.filter(cards, function(c)
         return not table.contains(cids, c)
       end)

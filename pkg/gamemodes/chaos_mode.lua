@@ -122,7 +122,7 @@ local chaos_getLogic = function()
     for i, p in ipairs(players) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       req:setData(p, { arg, n })
-      req:setDefaultReply(p, table.random(arg, n))
+      req:setDefaultReply(p, room:tableRandomPick(arg, n))
     end
 
     room:doBroadcastNotify("ShowToast", Fk:translate("chaos_intro"))

@@ -30,7 +30,7 @@ shaqiu:addEffect(fk.Death, {
       if #targets == 0 then return end
       local mapper = {}
       for _, id in ipairs(target:getCardIds("he")) do
-        local p = table.random(targets)
+        local p = room:tableRandomPick(targets)
         mapper[p] = mapper[p] or {}
         table.insert(mapper[p], id)
       end

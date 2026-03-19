@@ -37,7 +37,7 @@ zhongyi:addEffect(fk.DamageCaused, {
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:moveCardTo(table.random(player:getPile(zhongyi.name)), Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile, zhongyi.name)
+    room:moveCardTo(room:tableRandomPick(player:getPile(zhongyi.name)), Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile, zhongyi.name)
     data:changeDamage(1)
   end,
 })

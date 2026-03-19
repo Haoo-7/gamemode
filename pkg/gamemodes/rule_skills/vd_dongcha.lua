@@ -23,7 +23,7 @@ dongcha:addEffect(fk.GameStart, {
       return p.role == "rebel"
     end)
     if #targets > 0 then
-      room:addTableMark(player, "vd_dongcha", table.random(targets).id)
+      room:addTableMark(player, "vd_dongcha", room:tableRandomPick(targets).id)
     end
     room:sendLog{
       type = "#VDDongcha",

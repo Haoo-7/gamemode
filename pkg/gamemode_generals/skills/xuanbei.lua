@@ -25,7 +25,7 @@ xuanbei:addEffect(fk.GameStart, {
       end) ~= nil
     end)
     if #cards > 0 then
-      room:moveCardTo(table.random(cards, 2), Card.PlayerHand, player, fk.ReasonJustMove, xuanbei.name, nil, false, player)
+      room:moveCardTo(room:tableRandomPick(cards, 2), Card.PlayerHand, player, fk.ReasonJustMove, xuanbei.name, nil, false, player)
     end
   end,
 })

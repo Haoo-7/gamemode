@@ -78,14 +78,14 @@ local m_1v3_getLogic = function()
         end
         generals = table.map(generals, Util.NameMapper)
         general = room:askToChooseGeneral(p, {
-          generals = table.random(generals, generalNum),
+          generals = room:tableRandomPick(generals, generalNum),
           n = 1,
         })
         if n == 2 then
           generals = Fk:getGeneralsRandomly(generalNum)
           generals = table.map(generals, Util.NameMapper)
           deputy = room:askToChooseGeneral(p, {
-            generals = table.random(generals, generalNum),
+            generals = room:tableRandomPick(generals, generalNum),
             n = 1,
           })
         end

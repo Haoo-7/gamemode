@@ -18,7 +18,7 @@ shuhun:addEffect(fk.Damage, {
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local to = table.random(table.filter(player:getFriends(), function (p)
+    local to = room:tableRandomPick(table.filter(player:getFriends(), function (p)
       return p:isWounded()
     end))
     room:doIndicate(player, {to})
