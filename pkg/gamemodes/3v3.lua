@@ -1,10 +1,10 @@
 local m_3v3_desc = [[
-  
+
 # 3v3模式简介
 
   六名玩家3v3进行对战的竞技模式。
-  
-  若为“统帅三军”规则，则改为两名玩家1v1对战，每名玩家控制三名角色（统帅三军模式暂无）。
+
+  若仅以两名玩家创建房间，则改为“统帅三军”规则，每名玩家控制三名角色。
 
   3v3模式规则历年经过多次修改，新月杀采用的是2023版王者之战规则。
 
@@ -29,7 +29,7 @@ local m_3v3_desc = [[
   游戏开始前，展示16张公共武将牌，由双方主帅为本方阵营挑选武将。
 
   由暖色方开始，按1-2-2-...-2-1的数量，双方交替选择武将。
-  
+
   完成选将后，主帅为本方的三名角色选择武将，然后同时亮出，游戏开始。
 
   ___
@@ -48,12 +48,12 @@ local m_3v3_desc = [[
 
   每轮游戏分为四个行动单元。每个行动单元中，主帅选择：1.自己行动；2.选择一名本方先锋，该先锋行动，然后另一名先锋行动。
 
-  1. 由冷色方开始，执行一个行动单元；
-  
+  1. 由冷色方开始，执行一个行动单元，若为统率三军则此时只能由主帅先行动；
+
   2. 然后暖色方执行一个行动单元；
 
   3. 冷色方执行剩余的一个行动单元（即：若第一个行动单元时选择主帅行动，则此时两名先锋行动；若第一个行动单元时选择两名先锋行动，则此时主帅行动）；
-  
+
   4. 最后再由暖色方执行最后一个行动单元。
 
   5. 所有角色都行动后，完成一轮。
@@ -88,7 +88,7 @@ local m_3v3_desc = [[
   ## 武将牌堆
 
   采用专用的竞技将池，部分武将技能进行了修改。
-  
+
   新月杀中采用各版将池的并集，游玩时可以根据个人喜好酌情禁用。
 
   | 魏 | 蜀 | 吴 | 群 |
@@ -144,6 +144,34 @@ local m_3v3_desc = [[
   |  |  | 诸葛瑾（专属） |  |
 ]]
 
+local function summonBots(room)
+  local lord = room.players[1]
+  local nonlord = room.players[2]
+
+  local function summonFriends(player)
+    local p1 = room:summonPlayer(player, player, {
+      skip_preparation = true, send_log = false,
+    })
+    ---@cast p1 -nil
+    local p2 = room:summonPlayer(player, player, {
+      skip_preparation = true, send_log = false,
+    })
+    ---@cast p2 -nil
+
+    room:swapSeat(player, p2, false)
+
+    p1:addBuddy(p2)
+    p1:addBuddy(player)
+    p2:addBuddy(p1)
+    p2:addBuddy(player)
+    player:addBuddy(p1)
+    player:addBuddy(p2)
+  end
+
+  summonFriends(lord)
+  summonFriends(nonlord)
+end
+
 local m_3v3_getLogic = function()
   local m_3v3_logic = GameLogic:subclass("m_3v3_logic")
 
@@ -152,12 +180,24 @@ local m_3v3_getLogic = function()
     self.role_table = {
       {"cool_vanguard", "cool_marshal", "cool_vanguard", "warm_vanguard", "warm_marshal", "warm_vanguard"},
     }
+
+    if #room.players == 2 then
+      room:setBanner("is_3v3_duel", true)
+      -- 因为一控多不支持刷卡，所以ban手气卡
+      room.settings._game.luckTime = 0
+    end
   end
 
   function m_3v3_logic:assignRoles()
     local room = self.room
     local roles = self.role_table[math.random(1, 1)]
     table.shuffle(room.players)
+
+    -- 若为统率，此时需召唤人机
+    if room:getBanner("is_3v3_duel") then
+      summonBots(room)
+    end
+
     for i = 1, #room.players do
       local p = room.players[i]
       p.role = roles[i]
@@ -343,14 +383,22 @@ local m_3v3_getLogic = function()
     local warm_marshal = table.find(room.players, function (p)
       return p.role == "warm_marshal"
     end)
-    local function CommandAction(marshal)
-      room = marshal.room
+    local function commandAction(marshal)
       local friends = table.filter(room.alive_players, function (p)
         return marshal:isFriend(p) and p:getMark("@!action-round") == 0
       end)
       if #friends > 0 then
         local to = friends[1]
-        if #friends > 1 then
+        -- 若为统率三军，且为首轮，且为冷色，且零人行动过，则只能主将行动
+        if room:getBanner("is_3v3_duel") and room:getBanner("RoundCount") == 1 and
+          marshal == cool_marshal and
+          not table.find(room.alive_players, function(p)
+            return p:getMark("@!action-round") > 0
+          end) then
+
+          to = marshal
+
+        elseif #friends > 1 then
           to = room:askToChoosePlayers(marshal, {
             min_num = 1,
             max_num = 1,
@@ -395,9 +443,9 @@ local m_3v3_getLogic = function()
       return p:getMark("@!action-round") == 0
     end) do
       if room.game_finished then break end
-      CommandAction(cool_marshal)
+      commandAction(cool_marshal)
       if room.game_finished then break end
-      CommandAction(warm_marshal)
+      commandAction(warm_marshal)
     end
   end
 
@@ -418,11 +466,19 @@ end
 
 local m_3v3_mode = fk.CreateGameMode{
   name = "m_3v3_mode",
-  minPlayer = 6,
+  minPlayer = 2,
   maxPlayer = 6,
   logic = m_3v3_getLogic,
   rule = "#m_3v3_rule&",
+  feasible = function(self, settings)
+    local players = settings.playerNum
+    return players == 2 or players == 6
+  end,
   surrender_func = function(self, playedTime)
+    -- 若为统率 沿用1v1投降
+    if Fk:currentRoom():getBanner("is_3v3_duel") then
+      return { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
+    end
     if Self.role:endsWith("vanguard") then
       return { { text = "vanguard_never_surrender", passed = false } }
     else
