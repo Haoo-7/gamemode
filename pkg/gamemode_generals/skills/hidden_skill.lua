@@ -14,7 +14,7 @@ hidden_skill:addEffect(fk.PreparingGeneral, {
   mute = true,
   priority = 0,
   can_trigger = function(self, event, target, player, data)
-    if target == player then
+    if target == player and (data.results.general == data.general and data.results.deputy == data.deputyGeneral) then
       local room = player.room
       if not room:isGameMode("role_mode") then return false end
       local general = data.general
@@ -44,6 +44,7 @@ hidden_skill:addEffect(fk.PreparingGeneral, {
 
 hidden_skill:addEffect(fk.HpChanged, {
   priority = 0.001,
+  mute = true,
   can_trigger = function(self, event, target, player, data)
     return target == player and not player.dead and
       (player:getMark("__hidden_general") ~= 0 or player:getMark("__hidden_deputy") ~= 0) and
@@ -56,6 +57,7 @@ hidden_skill:addEffect(fk.HpChanged, {
 
 hidden_skill:addEffect(fk.TurnStart, {
   priority = 0.001,
+  mute = true,
   can_trigger = function(self, event, target, player, data)
     return target == player and not player.dead and
       (player:getMark("__hidden_general") ~= 0 or player:getMark("__hidden_deputy") ~= 0)
@@ -67,6 +69,7 @@ hidden_skill:addEffect(fk.TurnStart, {
 
 hidden_skill:addEffect(fk.BeforeMaxHpChanged, {
   priority = 0.001,
+  mute = true,
   can_trigger = function(self, event, target, player, data)
     return target == player and not player.dead and
       (player:getMark("__hidden_general") ~= 0 or player:getMark("__hidden_deputy") ~= 0)
