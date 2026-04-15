@@ -12,11 +12,28 @@ local desc_2v2 = [[
   队友手牌可见。
 ]]
 
+---@param room Room
+local function summonBots(room)
+  local lord = room.players[1]
+  local nonlord = room.players[2]
+  local p1 = room:summonPlayer(lord, nonlord, {
+    skip_preparation = true, send_log = false,
+  })
+  ---@cast p1 -nil
+  local p2 = room:summonPlayer(nonlord, nonlord, {
+    skip_preparation = true, send_log = false,
+  })
+  ---@cast p2 -nil
+
+  room:swapSeat(nonlord, p1, false)
+end
+
 local m_2v2_getLogic = function()
   ---@class m2v2Logic: GameLogic
   local m_2v2_logic = GameLogic:subclass("m_2v2_logic")
 
   function m_2v2_logic:assignRoles()
+    ---@return ServerPlayer[]
     local function getOtherPlayers(room, p)
       local ret = table.simpleClone(room.players)
       table.removeOne(ret, p)
@@ -30,18 +47,33 @@ local m_2v2_getLogic = function()
     end
 
     local room = self.room
+
+    if #room.players == 2 then
+      room:setBanner("is_2v2_duel", true)
+      -- 因为一控多不支持刷卡，所以ban手气卡
+      room.settings._game.luckTime = 0
+      summonBots(room)
+    end
+
     local croom = room.room
     local cowner = croom:getOwner()
     local owner = getPlayerByScreenName(room, cowner:getScreenName())
-    local buddy = room:askToChoosePlayers(owner, {
-      min_num = 1,
-      max_num = 1,
-      targets = getOtherPlayers(room, owner),
-      skill_name = "game_rule",
-      prompt = "#m_2v2_choose_buddy",
-      cancelable = true,
-      no_indicate = true,
-    })[1]
+    local buddy
+    if not room:getBanner("is_2v2_duel") then
+      buddy = room:askToChoosePlayers(owner, {
+        min_num = 1,
+        max_num = 1,
+        targets = getOtherPlayers(room, owner),
+        skill_name = "game_rule",
+        prompt = "#m_2v2_choose_buddy",
+        cancelable = true,
+        no_indicate = true,
+      })[1]
+    else
+      buddy = table.find(getOtherPlayers(room, owner), function(p)
+        return p.id < 0 and p.serverplayer == cowner
+      end)
+    end
 
     if buddy then
       local buddy_table = { 4, 3, 2, 1 }
@@ -105,33 +137,62 @@ local m_2v2_getLogic = function()
     local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
     local t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
     local t4 = table.slice(generals, generalNum * 3 + 1, generalNum * 4 + 1)
-    local req = room:askToMiniGame(nonlord, {
-      skill_name = "AskForGeneral",
-      game_type = "2v2_sel",
-      data_table = {
-        [nonlord[1].id] = {
-          friend_id = nonlord[4].id,
-          me = t1, friend = t4,
+    if room:getBanner("is_2v2_duel") then
+    local cool_marshal = room.players[1]
+    local warm_marshal = room.players[2]
+    local req = Request:new({cool_marshal, warm_marshal}, "AskForGeneral")
+    req.timeout = self.room:getSettings('generalTimeout')
+      local cool_generals = table.connect(t1, t4)
+      req:setData(cool_marshal, { cool_generals, 2, true })
+      req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 3))
+      local warm_generals = table.connect(t2, t3)
+      req:setData(warm_marshal, { warm_generals, 2, true })
+      req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 3))
+
+      room:doBroadcastNotify("ShowToast",
+        Fk:translate("2v2_duel_choose_general"),
+        {cool_marshal, warm_marshal})
+      req:ask()
+
+      local glist = {}
+      table.insert(glist, req:getResult(cool_marshal)[1])
+      table.insertTable(glist, req:getResult(warm_marshal))
+      table.insert(glist, req:getResult(cool_marshal)[2])
+
+      for i = 1, 4, 1 do
+        local p = room.players[i]
+        room:setPlayerGeneral(p, glist[i], true, true)
+        room:findGeneral(glist[i])
+      end
+    else
+      local req = room:askToMiniGame(nonlord, {
+        skill_name = "AskForGeneral",
+        game_type = "2v2_sel",
+        data_table = {
+          [nonlord[1].id] = {
+            friend_id = nonlord[4].id,
+            me = t1, friend = t4,
+          },
+          [nonlord[2].id] = {
+            friend_id = nonlord[3].id,
+            me = t2, friend = t3,
+          },
+          [nonlord[3].id] = {
+            friend_id = nonlord[2].id,
+            me = t3, friend = t2,
+          },
+          [nonlord[4].id] = {
+            friend_id = nonlord[1].id,
+            me = t4, friend = t1,
+          },
         },
-        [nonlord[2].id] = {
-          friend_id = nonlord[3].id,
-          me = t2, friend = t3,
-        },
-        [nonlord[3].id] = {
-          friend_id = nonlord[2].id,
-          me = t3, friend = t2,
-        },
-        [nonlord[4].id] = {
-          friend_id = nonlord[1].id,
-          me = t4, friend = t1,
-        },
-      },
-      timeout = self.room:getSettings('generalTimeout'),
-    })
-    for _, p in ipairs(nonlord) do
-      local general = req:getResult(p)
-      room:setPlayerGeneral(p, general, true, true)
-      room:findGeneral(general)
+        timeout = self.room:getSettings('generalTimeout'),
+      })
+      for _, p in ipairs(nonlord) do
+        local general = req:getResult(p)
+        room:setPlayerGeneral(p, general, true, true)
+        room:findGeneral(general)
+      end
     end
 
     room:askToChooseKingdom(nonlord)
@@ -151,12 +212,20 @@ end
 
 local m_2v2_mode = fk.CreateGameMode{
   name = "m_2v2_mode",
-  minPlayer = 4,
+  minPlayer = 2,
   maxPlayer = 4,
   rule = "#m_2v2_rule&",
+  feasible = function(self, settings)
+    local players = settings.playerNum
+    return players == 2 or players == 4
+  end,
   logic = m_2v2_getLogic,
   main_mode = "2v2_mode",
   surrender_func = function(self, playedTime)
+    -- 若为统率 沿用1v1投降
+    if Fk:currentRoom():getBanner("is_2v2_duel") then
+      return { { text = "time limitation: 1 min", passed = playedTime >= 60 } }
+    end
     local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
     { text = "2v2: left you alive", passed = table.find(Fk:currentRoom().players, function(p)
       return p.role == Self.role and p.dead and p.rest == 0
@@ -199,6 +268,15 @@ m_2v2_mode.ui_settings = {
       title = "m_2v2_limit_feiyang",
     },
   },
+
+  W.PreferenceGroup {
+    title = "",
+    W.SwitchRow {
+      _settingsKey = "_unused1",
+      title = "2v2_2player",
+      enabled = false,
+    }
+  },
 }
 
 Fk:loadTranslationTable{
@@ -213,6 +291,11 @@ Fk:loadTranslationTable{
   ["m_2v2_limit_feiyang"] = "四号位获得〖飞扬〗",
   ["help: m_2v2_limit_feiyang"] = "(OL) 四号位增加需弃两张手牌的、限定技版的〖飞扬〗",
   ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置两张手牌，弃置自己判定区的一张牌",
+
+  ["2v2_2player"] = "“统率二军”",
+  ["help: 2v2_2player"] = "游戏人数可以调成2，此时为“统率二军”模式 (此开关仅供提示)",
+
+  ["2v2_duel_choose_general"] = "请为本方阵营选择选择武将，从左至右为一四（或二三）",
 }
 
 Fk:addMiniGame{

@@ -557,6 +557,18 @@ local m_3v3_mode = fk.CreateGameMode{
   end,
 }
 
+local W = require "ui_emu.preferences"
+m_3v3_mode.ui_settings = {
+  W.PreferenceGroup {
+    title = "Game Rule",
+    W.SwitchRow {
+      _settingsKey = "_unused1",
+      title = "3v3_2player",
+      enabled = false,
+    }
+  }
+}
+
 Fk:loadTranslationTable{
   ["m_3v3_mode"] = "3v3",
   [":m_3v3_mode"] = m_3v3_desc,
@@ -582,6 +594,9 @@ Fk:loadTranslationTable{
   ["warm_marshal+warm_vanguard"] = "暖色方",
   ["vanguard_never_surrender"] = "先锋永不投降！",
   ["marshal_surrender"] = "本阵营先锋均阵亡",
+
+  ["3v3_2player"] = "统率三军",
+  ["help: 3v3_2player"] = "游戏人数可以调成2，此时为统率三军模式 (此开关仅供提示)",
 }
 
 return m_3v3_mode
