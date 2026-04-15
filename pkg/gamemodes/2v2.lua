@@ -143,10 +143,10 @@ local m_2v2_getLogic = function()
     local req = Request:new({cool_marshal, warm_marshal}, "AskForGeneral")
     req.timeout = self.room:getSettings('generalTimeout')
       local cool_generals = table.connect(t1, t4)
-      req:setData(cool_marshal, { cool_generals, 2, true })
+      req:setData(cool_marshal, { cool_generals, 2 })
       req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 3))
       local warm_generals = table.connect(t2, t3)
-      req:setData(warm_marshal, { warm_generals, 2, true })
+      req:setData(warm_marshal, { warm_generals, 2 })
       req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 3))
 
       room:doBroadcastNotify("ShowToast",
@@ -233,9 +233,14 @@ local m_2v2_mode = fk.CreateGameMode{
     return surrenderJudge
   end,
   winner_getter = function(self, victim)
+    -- 若为统率 直接结束游戏
+    if victim.surrendered and Fk:currentRoom():getBanner("is_2v2_duel") then
+      return victim.role == "loyalist" and "rebel" or "loyalist"
+    end
     if not victim.surrendered and victim.rest > 0 then
       return ""
     end
+
     local room = victim.room
     local alive = table.filter(room.players, function(p) ---@type Player[]
       return not p.surrendered and not (p.dead and p.rest == 0)
