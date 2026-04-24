@@ -443,13 +443,14 @@ rule:addEffect("filter", {
 })
 
 --首轮，已受伤角色视为拥有八阵
-local spec = {
+local spec={
   mute = true,
   is_delay_effect = true,
   can_trigger = function(self, event, target, player, data)
     return target == player and player:isWounded() and (player.room:getBanner("RoundCount") == 1 or player.room:getBanner("@[:]chaos_mode_event") == "chaos_mobilization") and
-      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none"))) and
-      #player:getEquipments(Card.SubtypeArmor) == 0 and
+      (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none")) and
+      #player:getEquipments(Card.SubtypeArmor) == 0 and not player:prohibitUse(Fk:cloneCard("jink")) 
+      and (data.extraData == {} or data.extraData.not_passive ~= true) and
       Fk.skills["#eight_diagram_skill"] ~= nil and Fk.skills["#eight_diagram_skill"]:isEffectable(player)
   end,
   on_cost = function(self, event, target, player, data)
@@ -468,6 +469,29 @@ local spec = {
   end,
 }
 rule:addEffect(fk.AskForCardUse, spec)
-rule:addEffect(fk.AskForCardResponse, spec)
+rule:addEffect(fk.AskForCardResponse, {
+  mute = true,
+  is_delay_effect = true,
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:isWounded() and (player.room:getBanner("RoundCount") == 1 or player.room:getBanner("@[:]chaos_mode_event") == "chaos_mobilization") and
+      (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none")) and
+      #player:getEquipments(Card.SubtypeArmor) == 0 and not player:prohibitResponse(Fk:cloneCard("jink")) and
+      Fk.skills["#eight_diagram_skill"] ~= nil and Fk.skills["#eight_diagram_skill"]:isEffectable(player)
+  end,
+  on_cost = function(self, event, target, player, data)
+    return player.room:askToSkillInvoke(player, {
+      skill_name = "bazhen",
+    })
+  end,
+  on_use = function (self, event, target, player, data)
+    local room = player.room
+    room:broadcastPlaySound("./packages/standard_cards/audio/card/eight_diagram")
+    room:setEmotion(player, "./packages/standard_cards/image/anim/eight_diagram")
+    player:broadcastSkillInvoke("bazhen")
+    room:notifySkillInvoked(player, "bazhen", "defensive")
+    local skill = Fk.skills["#eight_diagram_skill"]
+    skill:use(event, target, player, data)
+  end,
+})
 
 return rule
