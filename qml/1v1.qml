@@ -3,10 +3,12 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+
 import Fk
-import Fk.Components.LunarLTK
-import Fk.Pages.LunarLTK
 import Fk.Components.Common
+import LunarLtk
+import LunarLtk.Components
+import LunarLtk.Pages.Popups
 
 GraphicsBox {
   id: root
@@ -17,9 +19,9 @@ GraphicsBox {
   property string prompt : ""
   property var my_selected: []
   property var ur_selected: []
+  property bool no_convert
 
-
-  title.text: Util.processPrompt(prompt)
+  title.text: Ltk.processPrompt(prompt)
   width: 620
   height: 370
 
@@ -50,7 +52,9 @@ GraphicsBox {
         model: generals
 
         delegate: GeneralCardItem {
-          name: modelData
+          required property string modelData
+          required property int index
+          dataModel: Ltk.createGeneralCardModel(modelData)
           selectable: !my_selected.includes(index) && !ur_selected.includes(index)
           chosenInBox : selectedItem.includes(index)
 
@@ -72,11 +76,11 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")'))
-              roomScene.startCheat("FreeAssign", { card: this });
+            // 自选似乎必须需要model
+            // if (Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")'))
+              // Ltk.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
+              //  { oldName: dataModel.name });
           }
-          
-
         }
       }
 
@@ -102,9 +106,10 @@ GraphicsBox {
         enabled: false
         text: Lua.tr("Same General Convert")
         onClicked: {
-          cheatLoader.sourceComponent = Qt.createComponent("./SameConvertFrame.qml");
-          cheatLoader.item.extra_data = { cards: generals };
-          cheatDrawer.open();
+          // 同名替换也需要model
+          // cheatLoader.sourceComponent = Qt.createComponent("./SameConvertFrame.qml");
+          // cheatLoader.item.extra_data = { cards: generals };
+          // cheatDrawer.open();
         }
       }
 
@@ -116,9 +121,9 @@ GraphicsBox {
 
         onClicked: {
           close();
-          roomScene.state = "notactive";
+          Ltk.roomModel.deActivate();
           ClientInstance.replyToServer("",
-            { ids : selectedItem, generals : selectedItem.map(id => generalRepeater.itemAt(id).name) }
+            { ids : selectedItem, generals : selectedItem.map(id => generalRepeater.itemAt(id).dataModel.name) }
           );
         }
       }
@@ -127,9 +132,9 @@ GraphicsBox {
         id: buttonDetail
         enabled: selectedItem.length
         text: Lua.tr("Show General Detail")
-        onClicked: roomScene.startCheat(
-          "GeneralDetail",
-          { generals: selectedItem.map(id => generalRepeater.itemAt(id).name) }
+        onClicked: Ltk.roomScene.showInfoPopup(
+          Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
+          { generals: selectedItem.map(id => generalRepeater.itemAt(id).dataModel.name) }
         );
       }
 
@@ -141,11 +146,11 @@ GraphicsBox {
     buttonDetail.enabled = selectedItem.length;
   }
 
-  function loadData(data) {
-    [generals, num, my_selected, ur_selected, prompt, no_convert] = data;
+  // 现在框在展示后会触发shown信号，适合进行数据加载后的一些处理
+  onShown: {
     for (var i = 0; i < generals.length; i++) {
       let generalName = generals[i]
-      if (!no_convert && !my_selected.includes(i) && !ur_selected.includes(i) && Lua.call("GetSameGenerals", generalName).length) {
+      if (!no_convert && !my_selected.includes(i) && !ur_selected.includes(i) && Ltk.getSameGenerals(generalName).length) {
         convertBtn.visible = true;
         convertBtn.enabled = true;
         break;
