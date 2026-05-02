@@ -138,16 +138,16 @@ local m_2v2_getLogic = function()
     local t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
     local t4 = table.slice(generals, generalNum * 3 + 1, generalNum * 4 + 1)
     if room:getBanner("is_2v2_duel") then
-    local cool_marshal = room.players[1]
-    local warm_marshal = room.players[2]
-    local req = Request:new({cool_marshal, warm_marshal}, "AskForGeneral")
-    req.timeout = self.room:getSettings('generalTimeout')
+      local cool_marshal = room.players[1]
+      local warm_marshal = room.players[2]
+      local req = Request:new({cool_marshal, warm_marshal}, "AskForGeneral")
+      req.timeout = self.room:getSettings('generalTimeout')
       local cool_generals = table.connect(t1, t4)
       req:setData(cool_marshal, { cool_generals, 2 })
-      req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 3))
+      req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 2))
       local warm_generals = table.connect(t2, t3)
       req:setData(warm_marshal, { warm_generals, 2 })
-      req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 3))
+      req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 2))
 
       room:doBroadcastNotify("ShowToast",
         Fk:translate("2v2_duel_choose_general"),
