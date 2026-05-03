@@ -1,10 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
 import Fk
-import Fk.Components.LunarLTK
-import Fk.Pages.LunarLTK
+import LunarLTK
+import LunarLTK.Components
+import LunarLTK.Pages
+import LunarLTK.Pages.Popups
 import Fk.Components.Common
-
+import LunarLtk.Models.Popups
 GraphicsBox {
   id: root
 
@@ -16,8 +18,24 @@ GraphicsBox {
   property string my_recommend
   property string selected
   property bool initial: true
+
   width: 70 + 100 * my_cards.length
   height: 360
+
+  ChooseGeneralModel {
+    id: chooseGeneralModel
+  }
+
+  Connections {
+    target: chooseGeneralModel
+    function onGeneralChanged(oldname, newname) {
+      if (root.selected === oldname) {
+        root.selected = newname;
+      }
+      root.my_cards = chooseGeneralModel.generals.slice();
+      chooseGeneralModel.generals = root.my_cards;
+    }
+  }
 
   ColumnLayout {
     id: cardView
@@ -54,7 +72,8 @@ GraphicsBox {
         model: friend_cards
 
         GeneralCardItem {
-          name: modelData
+          required property string modelData
+          dataModel: Ltk.createGeneralCardModel(modelData)
           selectable: root.friend_selected == ""
           onClicked: {
             if (!selectable) return;
@@ -66,8 +85,8 @@ GraphicsBox {
             ClientInstance.notifyServer("PushRequest", "updatemini,recommend," + root.friend_recommend);
           }
 
-          onRightClicked: {
-            roomScene.startCheat("GeneralDetail", { generals: [modelData] });
+          onRightClicked: {root.parent.showInfoPopup(
+            Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),{ generals: [modelData] });
           }
 
           Image {
@@ -125,23 +144,26 @@ GraphicsBox {
         model: my_cards
 
         GeneralCardItem {
-          name: modelData
+          required property string modelData
+          dataModel: Ltk.createGeneralCardModel(modelData)
           selectable: true
-          chosenInBox: root.selected == name
-          selected: root.selected == name
+          chosenInBox: root.selected == dataModel.name
+          selected: root.selected == dataModel.name
           onClicked: {
             if (!selectable) return;
-            if (root.selected == name) {
+            if (root.selected == dataModel.name) {
               root.selected = "";
             } else {
-              root.selected = name;
+              root.selected = dataModel.name;
             }
             ClientInstance.notifyServer("PushRequest", "updatemini,preselect," + root.selected);
           }
 
           onRightClicked: {
-            if (Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")'))
-              roomScene.startCheat("FreeAssign", { card: this });
+            if (Lua.client.getSettings("enableFreeAssign")) {
+              root.parent.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
+                { dataModel: chooseGeneralModel, oldName: modelData });
+            }
           }
 
           Image {
@@ -199,10 +221,9 @@ GraphicsBox {
         id: detailBtn
         enabled: root.selected !== ""
         text: Lua.tr("Show General Detail")
-        onClicked: roomScene.startCheat(
-          "GeneralDetail",
-          { generals: [root.selected] }
-        );
+          onClicked: {root.parent.showInfoPopup(
+            Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),{ generals: [root.selected] });
+          }
       }
     }
   }
@@ -212,9 +233,11 @@ GraphicsBox {
       .arg(Lua.tr("seat#" + roomScene.getPhoto(Self.id).seatNumber))
     root.friend_cards = data.friend;
     root.my_cards = data.me;
+    chooseGeneralModel.generals = root.my_cards;
+    chooseGeneralModel.initGeneralModels();
 
     for (let generalName of data.me) {
-      if (Lua.call("GetSameGenerals", generalName).length > 0) {
+      if (Ltk.getSameGenerals(generalName).length > 0) {
         convertBtn.enabled = true;
         break;
       }
@@ -227,6 +250,9 @@ GraphicsBox {
     if (root.initial) {
       return;
     }
+
+    chooseGeneralModel.generals = root.my_cards;
+    chooseGeneralModel.initGeneralModels();
 
     ClientInstance.notifyServer("PushRequest", "updatemini,updateFriendCards," + my_cards.join("|"));
     if (root.selected && !my_cards.includes(root.selected)) {
