@@ -33,6 +33,8 @@ local ban_skills = {
   "fenyong", "danggu", -- 弱智技能
 }
 
+local U = require "packages.utility.utility"
+
 local brawl_getLogic = function()
   local brawl_logic = GameLogic:subclass("brawl_logic")
 
@@ -76,9 +78,8 @@ local brawl_getLogic = function()
       room:gameOver("")
     end
 
-    local req = Request:new(players, "CustomDialog")
-    req.timeout = self.room:getSettings('generalTimeout')
     local special_generals = { "mouxusheng", "hiddenone", "anjiang" } -- 特殊武将列表
+    local skillsMap, generalsMap, minNumMap, maxNumMap, promptMap = {}, {}, {}, {}, {}
     for k, p in ipairs(players) do
       local avatar = p._splayer:getAvatar()
       if table.contains(special_generals, avatar) then
@@ -101,21 +102,27 @@ local brawl_getLogic = function()
         skills = table.slice(skill_pool, skill_num * (k - 1) + 1 , skill_num * k + 1)
         generals = table.slice(general_pool, skill_num * (k - 1) + 1 , skill_num * k + 1)
       end
+      table.insert(skillsMap, skills)
+      table.insert(generalsMap, generals)
       local num = p.role == "lord" and 3 or 2
-      req:setData(p, {
-        path = "packages/utility/qml/ChooseSkillBox.qml",
-        data = {
-          skills, num, num, "#brawl-choose:::" .. tostring(num), generals
-        },
-      })
-      req:setDefaultReply(p, room:tableRandomPick(skills, num))
+      table.insert(minNumMap, num)
+      table.insert(maxNumMap, num)
+      table.insert(promptMap, "#brawl-choose:::" .. tostring(num))
     end
 
-    req.focus_text = "AskForGeneral"
-    req:ask()
+    local result = U.askToJointSkills(players[1], {
+      timeout = self.room:getSettings('generalTimeout'),
+      players = players,
+      skill_name = "AskForGeneral",
+      skills = skillsMap,
+      generals = generalsMap,
+      min_num = minNumMap,
+      max_num = maxNumMap,
+      prompt = promptMap,
+    })
 
     for _, p in ipairs(players) do
-      local choice = req:getResult(p)
+      local choice = result[p]
       room:setPlayerMark(p, "_brawl_skills", choice)
       choice = table.map(choice, Util.TranslateMapper)
       room:setPlayerMark(p, "@brawl_skills", "<font color='burlywood'>" .. table.concat(choice, " ") .. "</font>")
