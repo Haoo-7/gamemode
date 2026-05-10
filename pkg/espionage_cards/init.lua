@@ -173,6 +173,11 @@ local broken_halberd = fk.CreateCard{
   type = Card.TypeEquip,
   sub_type = Card.SubtypeWeapon,
   attack_range = 0,
+  dynamic_equip_skills = function (self, player)
+    if (Fk:currentRoom():getBanner("huaxiu") or {})[self.name] then
+      return { Fk.skills["#soul__crossbow_skill"] }
+    end
+  end,
 }
 Fk:loadTranslationTable{
   ["broken_halberd"] = "折戟",
@@ -226,6 +231,11 @@ local women_dress = fk.CreateCard{
   type = Card.TypeEquip,
   sub_type = Card.SubtypeArmor,
   equip_skill = "#women_dress_skill",
+  dynamic_equip_skills = function (self, player)
+    if (Fk:currentRoom():getBanner("huaxiu") or {})[self.name] then
+      return { Fk.skills["#soul__eight_diagram_skill"] }
+    end
+  end,
 }
 Fk:loadTranslationTable{
   ["women_dress"] = "女装",
@@ -250,6 +260,11 @@ local inferior_horse = fk.CreateCard{
   type = Card.TypeEquip,
   sub_type = Card.SubtypeOffensiveRide,
   equip_skill = "#inferior_horse_skill",
+  dynamic_equip_skills = function (self, player)
+    if (Fk:currentRoom():getBanner("huaxiu") or {})[self.name] then
+      return { Fk.skills["#lingling_horse_skill"] }
+    end
+  end,
 }
 Fk:loadTranslationTable{
   ["inferior_horse"] = "驽马",
