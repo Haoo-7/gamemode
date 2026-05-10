@@ -123,7 +123,7 @@ local kangqin_getLogic = function()
     local room = self.room
     local generalNum = room:getSettings('generalNum')
     local n = room:getSettings('enableDeputy') and 2 or 1
-    local lord = room:getLord()
+    local lord = room:getLord() --[[@as ServerPlayer]]
     room:setCurrent(lord)
     -- 询问选将
     local lords, soldiers = room:tableRandomPick(qin_generals, math.max(2, generalNum//3) ), table.simpleClone(qin_soldiers)
@@ -194,8 +194,19 @@ local kangqin_getLogic = function()
     for i, p in ipairs(to_ask) do
       local choices = table.slice(toSelectSkills, (i-1)*num +1, i*num +1)
       req:setData(p, {
-        path = "packages/utility/qml/ChooseSkillBox.qml",
-        data = { choices, 3*n, 3*n, "#kangqin-choose:::" .. tostring(3*n), {} },
+        component = {
+          url = "packages/utility/qml/ChooseSkillBox.qml",
+          model = {
+            url = "packages/utility/qml/models/ChooseSkillModel.qml",
+            prop = {
+              skills = choices,
+              min = 3*n,
+              max = 3*n,
+              prompt = "#kangqin-choose:::" .. tostring(3*n),
+              generals = {},
+            }
+          },
+        }
       })
       req:setDefaultReply(p, room:tableRandomPick(choices, n*3))
     end
