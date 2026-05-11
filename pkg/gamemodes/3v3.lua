@@ -273,10 +273,17 @@ local m_3v3_getLogic = function()
       local my_genrals = (p == cool_marshal) and cool_generals or warm_generals
       local result = room:askToCustomDialog(p, {
         skill_name = "m_3v3_mode",
-        qml_path = "packages/gamemode/qml/1v1.qml",
-        extra_data = {
-          all_generals, n, my_selected, ur_selected, prompt
-        }
+        component = {
+          url = "packages/gamemode/qml/1v1.qml",
+          prop = {
+            -- 按照QML文件中对属性的定义填写prop
+            generals = all_generals,
+            num = n,
+            my_selected = my_selected,
+            ur_selected = ur_selected,
+            prompt = prompt,
+          }
+        },
       })
       local selected = {}
       if result ~= "" then
