@@ -29,4 +29,25 @@ rule:addEffect(fk.DrawInitialCards, {
   end,
 })
 
+--一控二模式：队友死后立刻切换视角到活人
+rule:addEffect(fk.Death, {
+  priority = 0.001,
+  can_refresh = function(self, event, target, player, data)
+    return target ~= player and target.role == player.role and not player.dead and
+      target.room:getBanner("is_2v2_duel") and
+      table.contains(target._observers, target.serverplayer) and
+      target.serverplayer == player.serverplayer
+  end,
+  on_refresh = function(self, event, target, player, data)
+    -- TODO: 这块啥时候封装个切视角的Server方法
+    local controller = player.serverplayer
+    table.removeOne(target._observers, controller)
+    table.insert(player._observers, controller)
+
+    -- 因为调了Cpp.ServerPlayer的方法必须encode
+    player.serverplayer:doNotify("ChangeSelf", cbor.encode(player.id))
+  end,
+})
+
+
 return rule
