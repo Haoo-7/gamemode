@@ -74,15 +74,6 @@ Fk:loadTranslationTable{
   ["~v33__huangquan"] = "魏王厚待于我，降魏又有何错？",
 }
 
-General:new(extension, "v33__lvbu", "qun", 4):addSkills { "v33__zhanshen" }
-Fk:loadTranslationTable{
-  ["v33__lvbu"] = "吕布",
-  ["#v33__lvbu"] = "武的化身",
-  ["illustrator:v33__lvbu"] = "第七个桔子",
-
-  ["~v33__lvbu"] = "不可能！",
-}
-
 General:new(extension, "v33__xusheng", "wu", 4):addSkills { "v33__yicheng" }
 Fk:loadTranslationTable{
   ["v33__xusheng"] = "徐盛",

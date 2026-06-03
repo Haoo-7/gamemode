@@ -4,6 +4,7 @@ local skill = fk.CreateSkill {
 
 Fk:loadTranslationTable{
   ["#es__poison-give"] = "你可以将摸到的【毒】交给其他角色（不触发失去体力效果）",
+  ["es__poison_give"] = "毒",
 }
 
 skill:addEffect("cardskill", {
