@@ -55,7 +55,7 @@ Fk:loadTranslationTable{
   ["@$ChaosSupply"] = "供给区",
   ["@ChaosSupply"] = "供给牌",
   ["chaos_grain_take_supply"] = "粮草供给",
-  -- ["#chaos_grain_take_supply"] = "你可以花费“粮草”，获得供给区中的牌，基本牌2枚，非基本牌3枚。你有 %arg 枚“粮草”。",
+  ["#chaos_grain_take_supply"] = "你可以花费“粮草”，获得供给区中的牌，基本牌2枚，非基本牌3枚。你有 %arg 枚“粮草”",
 
   ["recover2"] = "回复2点体力",
 }
@@ -214,8 +214,6 @@ rule:addEffect(fk.EventPhaseStart, {
         cancelable = true,
         extra_data = player:getMark("@!!chaos_grain-noclear"),
         data = {{"@$ChaosSupply", supply_ids}},
-        -- prompt = "#chaos_grain_take_supply:::" .. player:getMark("@!!chaos_grain-noclear"),
-        -- skill_name = "chaos_grain_take_supply"
       })
       if #cards == 0 then break end
       local total_cost = 0
@@ -255,6 +253,9 @@ Fk:addPoxiMethod{
     end
     return n <= extra_data
   end,
+  prompt = function (data, extra_data)
+    return "#chaos_grain_take_supply:::" .. extra_data
+  end
 }
 
 --- 随机事件
