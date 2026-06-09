@@ -12,11 +12,11 @@ GraphicsBox {
 
   property var friend_cards: []
   property var my_cards: []
-  property string friend_recommend
-  property string friend_not_determ: ""
-  property string friend_selected: ""
-  property string my_recommend
-  property string selected
+  property int friend_recommend: -1
+  property int friend_not_determ: -1
+  property int friend_selected: -1
+  property int my_recommend: -1
+  property int selected: -1
   property bool initial: true
 
   width: 70 + 100 * my_cards.length
@@ -28,12 +28,8 @@ GraphicsBox {
 
   Connections {
     target: chooseGeneralModel
-    function onGeneralChanged(oldname, newname) {
-      if (root.selected === oldname) {
-        root.selected = newname;
-      }
+    function onGeneralChanged(idx, newname) {
       root.my_cards = chooseGeneralModel.generals.slice();
-      chooseGeneralModel.generals = root.my_cards;
     }
   }
 
@@ -73,14 +69,15 @@ GraphicsBox {
 
         GeneralCardItem {
           required property string modelData
+          required property int index
           dataModel: Ltk.createGeneralCardModel(modelData)
-          selectable: root.friend_selected == ""
+          selectable: root.friend_selected === -1
           onClicked: {
             if (!selectable) return;
-            if (root.friend_recommend == modelData) {
-              root.friend_recommend = "";
+            if (root.friend_recommend == index) {
+              root.friend_recommend = -1;
             } else {
-              root.friend_recommend = modelData;
+              root.friend_recommend = index;
             }
             ClientInstance.notifyServer("PushRequest", "updatemini,recommend," + root.friend_recommend);
           }
@@ -91,7 +88,7 @@ GraphicsBox {
 
           Image {
             source: AppPath + "/packages/gamemode/image/determ.png"
-            visible: friend_selected == modelData
+            visible: friend_selected == index
             anchors.horizontalCenter: parent.horizontalCenter
             y: 90
             scale: 0.75
@@ -99,7 +96,7 @@ GraphicsBox {
 
           Image {
             source: AppPath + "/packages/gamemode/image/not_determ.png"
-            visible: friend_not_determ == modelData
+            visible: friend_not_determ == index
             anchors.horizontalCenter: parent.horizontalCenter
             y: 90
             scale: 0.75
@@ -107,7 +104,7 @@ GraphicsBox {
 
           Image {
             source: AppPath + "/packages/gamemode/image/recommend2.png"
-            visible: friend_recommend == modelData
+            visible: friend_recommend == index
             anchors.horizontalCenter: parent.horizontalCenter
             y: 90
             scale: 0.75
@@ -145,16 +142,17 @@ GraphicsBox {
 
         GeneralCardItem {
           required property string modelData
+          required property int index
           dataModel: Ltk.createGeneralCardModel(modelData)
           selectable: true
-          chosenInBox: root.selected == dataModel.name
-          selected: root.selected == dataModel.name
+          chosenInBox: root.selected == index
+          selected: root.selected == index
           onClicked: {
             if (!selectable) return;
-            if (root.selected == dataModel.name) {
-              root.selected = "";
+            if (root.selected == index) {
+              root.selected = -1;
             } else {
-              root.selected = dataModel.name;
+              root.selected = index;
             }
             ClientInstance.notifyServer("PushRequest", "updatemini,preselect," + root.selected);
           }
@@ -162,13 +160,13 @@ GraphicsBox {
           onRightClicked: {
             if (Lua.client.getSettings("enableFreeAssign")) {
               root.parent.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
-                { dataModel: chooseGeneralModel, oldName: modelData });
+                { dataModel: chooseGeneralModel, index: index });
             }
           }
 
           Image {
             source: AppPath + "/packages/gamemode/image/recommend.png"
-            visible: my_recommend == modelData
+            visible: my_recommend == index
             anchors.horizontalCenter: parent.horizontalCenter
             y: 90
             scale: 0.75
@@ -207,22 +205,22 @@ GraphicsBox {
         text: Lua.tr("Fight")
         width: 120
         height: 35
-        enabled: root.selected !== ""
+        enabled: root.selected >= 0
 
         onClicked: {
           close();
           roomScene.state = "notactive";
           ClientInstance.notifyServer("PushRequest", "updatemini,select," + root.selected);
-          ClientInstance.replyToServer("", root.selected);
+          ClientInstance.replyToServer("", root.my_cards[root.selected]);
         }
       }
 
       MetroButton {
         id: detailBtn
-        enabled: root.selected !== ""
+        enabled: root.selected >= 0
         text: Lua.tr("Show General Detail")
           onClicked: {root.parent.showInfoPopup(
-            Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),{ generals: [root.selected] });
+            Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),{ generals: [root.my_cards[root.selected]] });
           }
       }
     }
@@ -255,20 +253,20 @@ GraphicsBox {
     chooseGeneralModel.initGeneralModels();
 
     ClientInstance.notifyServer("PushRequest", "updatemini,updateFriendCards," + my_cards.join("|"));
-    if (root.selected && !my_cards.includes(root.selected)) {
-      root.selected = "";
+    /* if (root.selected && !my_cards.includes(root.selected)) {
+      root.selected = -1;
       ClientInstance.notifyServer("PushRequest", "updatemini,preselect," + root.selected);
-    }
+    } */
   }
 
   function updateData(data) {
     let [type, value] = data;
-    value = value ?? "";
+    value = value ?? -1;
     if (type == "preselect") {
       friend_not_determ = value;
     } else if (type == "select") {
-      friend_not_determ = "";
-      friend_recommend = "";
+      friend_not_determ = -1;
+      friend_recommend = -1;
       friend_selected = value;
     } else if (type == "recommend") {
       my_recommend = value;
