@@ -190,13 +190,13 @@ GraphicsBox {
       MetroButton {
         id: convertBtn
         // visible: !convertDisabled
-        enabled: false
+        enabled: chooseGeneralModel.canConvert
         text: Lua.tr("Same General Convert")
         onClicked: {
-          cheatLoader.sourceComponent = Qt.createComponent("./SameConvertFrame.qml");
-          cheatLoader.item.extra_data = { cards: my_cards };
-          cheatLoader.item.finish.connect(root.my_cardsChanged);
-          cheatDrawer.open();
+          roomScene.showInfoPopup(
+            Qt.createComponent("LunarLtk.Pages.InfoPopups", "SameConvert"),
+            { dataModel: chooseGeneralModel }
+          );
         }
       }
 
@@ -233,13 +233,6 @@ GraphicsBox {
     root.my_cards = data.me;
     chooseGeneralModel.generals = root.my_cards;
     chooseGeneralModel.initGeneralModels();
-
-    for (let generalName of data.me) {
-      if (Ltk.getSameGenerals(generalName).length > 0) {
-        convertBtn.enabled = true;
-        break;
-      }
-    }
 
     root.initial = false;
   }
