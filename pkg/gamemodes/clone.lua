@@ -1,0 +1,276 @@
+local m_clone_desc = [[
+
+# 克隆大作战模式简介
+
+  六名玩家结成两个阵营进行对战的竞技模式。
+
+  ___
+
+  ## 阵营/座次分布
+
+  分为龙军和虎军两个阵营，以龙-虎-龙-虎-龙-虎的顺序排列座次。
+
+  ___
+
+  ## 胜利条件
+
+  消灭敌方阵营的所有人。
+
+  ___
+
+  ## 选将流程
+
+  游戏开始前，双方各展示4张武将牌，交由阵营内三人进行限时投票。
+
+  计时结束后，从票数最多的武将牌中选择作为本方阵营共用的武将。
+
+  亮出武将牌后，游戏开始。
+
+  ___
+
+  ## 击杀奖惩
+
+  击杀一名角色后，同势力角色各摸一张牌。
+
+  ---
+
+  ## 特殊禁将
+
+  以下武将被禁止使用：
+
+  - 刘禅
+]]
+
+local m_clone_getLogic = function()
+  local m_clone_logic = GameLogic:subclass("m_clone_logic")
+
+  function m_clone_logic:initialize(room)
+    GameLogic.initialize(self, room)
+    self.role_table = {
+      { "loyalist", "rebel", "loyalist", "rebel", "loyalist", "rebel" },
+    }
+  end
+
+  function m_clone_logic:assignRoles()
+    local room = self.room
+    local roles = self.role_table[1]
+    room:shuffleTable(room.players)
+
+    for i = 1, #room.players do
+      local p = room.players[i]
+      p.role = roles[i]
+      room:setPlayerProperty(p, "role_shown", true)
+      room:broadcastProperty(p, "role")
+    end
+    room:setCurrent(room.players[1])
+  end
+
+  --- 真人测试用
+  --[[ function m_clone_logic:adjustSeats()
+    local room = self.room
+    local true_players = table.filter(room.players, function(p)
+      return p.id > 0
+    end)
+    local player_clone = table.simpleClone(room.players)
+    for _, p in ipairs(true_players) do
+      table.removeOne(player_clone, p)
+    end
+    table.insert(player_clone, 1, true_players[1])
+    if true_players[2] then
+      table.insert(player_clone, 3, true_players[2])
+    end
+
+    room:arrangeSeats(player_clone)
+
+    for i = 1, #room.players do
+      local p = room.players[i]
+      p.role = self.role_table[1][i]
+      room:setPlayerProperty(p, "role_shown", true)
+      room:broadcastProperty(p, "role")
+    end
+  end ]]
+
+  function m_clone_logic:chooseGenerals()
+    local room = self.room
+    local generalNum = math.min(math.max(room:getSettings('generalNum'), 4), 12)
+
+    local blacklist = { "liuzhan" }
+
+    local players = room.players
+    local generals = table.map(Fk:getGeneralsRandomly(
+    #players * generalNum, nil, blacklist
+    ), Util.NameMapper)
+    local a1, a2 = #generals, #players * generalNum
+    if a1 < a2 then
+      room:sendLog{
+        type = "#NoEnoughGeneralDraw",
+        arg = a1,
+        arg2 = a2,
+        toast = true,
+      }
+      room:gameOver("")
+    end
+    room:shuffleTable(generals)
+    local t1 = table.slice(generals, 1, generalNum + 1)
+    local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
+
+    local data_table = {}
+    local player_length = #players
+    local timeout = self.room:getSettings('generalTimeout')
+    for index, to in ipairs(players) do
+      local friend_ids = { players[(index + 1) % player_length + 1].id, players[(index + 3) % player_length + 1].id }
+      data_table[to.id] = {
+        friends = friend_ids,
+        pool = index % 2 == 0 and t2 or t1,
+        prop = {
+          friends = friend_ids,
+          timeout = timeout
+        }
+      }
+    end
+
+    local req = room:askToMiniGame(players, {
+      skill_name = "AskForGeneral",
+      game_type = "clone_sel",
+      data_table = data_table,
+      timeout = timeout + 5 -- 缓冲时间
+    })
+    local pool1, pool2 = {}, {}
+    for _, p in ipairs(players) do
+      local target_pool = p.role == "loyalist" and pool1 or pool2
+      if p.id > 0 then
+        -- 人机投票不计入
+        local general = req:getResult(p)[1] or (p.role == "loyalist" and t1 or t2)[1]
+        target_pool[general] = (target_pool[general] or 0) + 1
+      end
+    end
+    --- 实际武将赋值
+    local pool_max, max = {}, 1
+    local max_general
+    for general, count in pairs(pool1) do
+      if count > max then
+        max = count
+        pool_max = { general }
+      elseif count == max then
+        table.insert(pool_max, general)
+      end
+    end
+    max_general = pool_max[1] and room:tableRandomPick(pool_max) or t1[1]
+    printf("choose general from pool1: %s", max_general)
+    room:findGeneral(max_general)
+    for i = 1, player_length, 2 do
+      room:setPlayerGeneral(players[i], max_general, true, true)
+    end
+    pool_max, max = {}, 1
+    for general, count in pairs(pool2) do
+      if count > max then
+        max = count
+        pool_max = { general }
+      elseif count == max then
+        table.insert(pool_max, general)
+      end
+    end
+    max_general = pool_max[1] and room:tableRandomPick(pool_max) or t2[1]
+    printf("choose general from pool2: %s", max_general)
+    room:findGeneral(max_general)
+    for i = 2, player_length, 2 do
+      room:setPlayerGeneral(players[i], max_general, true, true)
+    end
+
+    room:askToChooseKingdom(players)
+  end
+
+  return m_clone_logic
+end
+
+local m_clone_mode = fk.CreateGameMode {
+  name = "m_clone_mode",
+  minPlayer = 6,
+  maxPlayer = 6,
+  logic = m_clone_getLogic,
+  rule = "#m_clone_rule&",
+  feasible = function(self, settings)
+    local players = settings.playerNum
+    return players % 2 == 0
+  end,
+  surrender_func = function(self, playedTime)
+    local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
+    { text = "clone: left you alive", passed = table.find(Fk:currentRoom().players, function(p)
+      return p.role == Self.role and p.dead and p.rest == 0
+    end) and true } }
+    return surrenderJudge
+  end,
+  winner_getter = function(self, victim)
+    if not victim.surrendered and victim.rest > 0 then
+      return ""
+    end
+    local room = victim.room
+    local alive = table.filter(room.players, function(p) ---@type Player[]
+      return not p.surrendered and not (p.dead and p.rest == 0)
+    end)
+    local winner = alive[1].role
+    for _, p in ipairs(alive) do
+      if p.role ~= winner then
+        return ""
+      end
+    end
+    return winner
+  end,
+  reward_punish = function (self, victim, killer)
+    local room = victim.room
+    for _, p in ipairs(room.alive_players) do
+      if p.role == victim.role and not p.dead then
+        p:drawCards(1, "game_rule")
+      end
+    end
+  end,
+}
+
+--[[ local W = require "ui_emu.preferences"
+m_clone_mode.ui_settings = {
+  W.PreferenceGroup {
+    title = "Game Rule",
+    W.SwitchRow {
+      _settingsKey = "_unused1",
+      title = "clone_2player",
+      enabled = false,
+    }
+  }
+} ]]
+
+Fk:loadTranslationTable {
+  ["m_clone_mode"] = "克隆大作战",
+  [":m_clone_mode"] = m_clone_desc,
+
+  ["time limitation: 1 min"] = "游戏时长达到1分钟",
+  ["clone: left you alive"] = "你所处队伍仅剩你存活",
+
+  ["#CloneVote"] = "请为你心怡的武将投下一票！",
+}
+
+Fk:addMiniGame {
+  name = "clone_sel",
+  qml_path = "packages/gamemode/qml/clone",
+  default_choice = function(player, data)
+    return { data.pool[1] }
+  end,
+  update_func = function(player, data)
+    local room = player.room
+    local d = player.mini_game_data.data
+    for _, friend_id in ipairs(d.friends) do
+      room:getPlayerById(friend_id):doNotify("UpdateMiniGame", data)
+    end
+  end,
+  model = function(player, data)
+    return {
+      uri = "LunarLtk.Models.Popups",
+      name = "ChooseGeneralModel",
+      prop = {
+        prompt = "#CloneVote",
+        generals = data.pool,
+      },
+    }
+  end,
+}
+
+return m_clone_mode

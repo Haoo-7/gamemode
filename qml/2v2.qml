@@ -1,11 +1,12 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Fk
+import Fk.Components.Common
 import LunarLTK
 import LunarLTK.Components
-import LunarLTK.Pages
 import LunarLTK.Pages.Popups
-import Fk.Components.Common
 import LunarLtk.Models.Popups
 GraphicsBox {
   id: root
@@ -45,8 +46,8 @@ GraphicsBox {
 
       Rectangle {
         color: "#6B5D42"
-        width: 20
-        height: 100
+        implicitWidth: 20
+        implicitHeight: 100
         radius: 5
 
         Text {
@@ -65,7 +66,7 @@ GraphicsBox {
       }
 
       Repeater {
-        model: friend_cards
+        model: root.friend_cards
 
         GeneralCardItem {
           required property string modelData
@@ -228,7 +229,7 @@ GraphicsBox {
 
   function loadData(data) {
     root.title.text = ("你的座次是 %1 , 请选择")
-      .arg(Lua.tr("seat#" + roomScene.getPhoto(Self.id).seatNumber))
+      .arg(Lua.tr("seat#" + roomScene.getPhoto(Cpp.self.id).seatNumber))
     root.friend_cards = data.friend;
     root.my_cards = data.me;
     chooseGeneralModel.generals = root.my_cards;
