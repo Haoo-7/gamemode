@@ -156,7 +156,6 @@ local m_clone_getLogic = function()
       end
     end
     max_general = pool_max[1] and room:tableRandomPick(pool_max) or t1[1]
-    printf("choose general from pool1: %s", max_general)
     room:findGeneral(max_general)
     for i = 1, player_length, 2 do
       room:setPlayerGeneral(players[i], max_general, true, true)
@@ -171,7 +170,6 @@ local m_clone_getLogic = function()
       end
     end
     max_general = pool_max[1] and room:tableRandomPick(pool_max) or t2[1]
-    printf("choose general from pool2: %s", max_general)
     room:findGeneral(max_general)
     for i = 2, player_length, 2 do
       room:setPlayerGeneral(players[i], max_general, true, true)
