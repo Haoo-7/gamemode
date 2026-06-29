@@ -7,8 +7,8 @@ import QtQuick.Layouts
 import Fk
 import Fk.Components.Common
 import LunarLtk
-import LunarLTK.Components
-import LunarLTK.Pages.Popups
+import LunarLtk.Components
+import LunarLtk.Pages.Popups
 import LunarLtk.Models.Popups
 
 pragma ComponentBehavior: Bound

@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Fk
-import Fk.Components.LunarLTK
+import Fk.Components.LunarLtk
 
 Item {
   id: root

@@ -4,9 +4,9 @@ import QtQuick
 import QtQuick.Layouts
 import Fk
 import Fk.Components.Common
-import LunarLTK
-import LunarLTK.Components
-import LunarLTK.Pages.Popups
+import LunarLtk
+import LunarLtk.Components
+import LunarLtk.Pages.Popups
 import LunarLtk.Models.Popups
 GraphicsBox {
   id: root
