@@ -52,9 +52,17 @@ local m_clone_getLogic = function()
   end
 
   function m_clone_logic:assignRoles()
+    -- 由于需要调整座位， 所以在这里不分配身份
+  end
+
+  function m_clone_logic:adjustSeats()
     local room = self.room
     local roles = self.role_table[1]
-    room:shuffleTable(room.players)
+
+    local player_clone = table.simpleClone(room.players)
+    room:shuffleTable(player_clone)
+
+    room:arrangeSeats(player_clone)
 
     for i = 1, #room.players do
       local p = room.players[i]
