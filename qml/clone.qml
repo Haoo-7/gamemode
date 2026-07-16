@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
@@ -11,8 +12,6 @@ import LunarLtk.Components
 import LunarLtk.Pages.Popups
 import LunarLtk.Models.Popups
 
-pragma ComponentBehavior: Bound
-
 GraphicsBox {
   id: root
 
@@ -24,6 +23,7 @@ GraphicsBox {
   property int timeout: Config.roomTimeout
   
   property int updateHook: 1
+  property int updateHook2: 1
 
   readonly property var friendsAvatar: {
     const ret = {};
@@ -33,11 +33,19 @@ GraphicsBox {
     )
     return ret;
   }
+
+  Connections {
+    target: root.dataModel
+    function onGeneralChanged(idx, newname) {
+      ClientInstance.notifyServer("PushRequest", "updatemini,changeGeneral," + idx + "," + newname);
+      root.updateHook2 = (root.updateHook2 + 1) % 10000;
+    }
+  }
   
   title.text: dataModel.promptText
 
   width: 40 + 120 * Math.min(dataModel.generals.length, 8)
-  height: 250
+  height: 300
 
   RowLayout {
     id: delerow
@@ -49,7 +57,10 @@ GraphicsBox {
 
     Repeater {
       id: cardRepeater
-      model: root.dataModel.generals
+      model: {
+        root.updateHook2;
+        return root.dataModel.generals
+      }
 
       delegate: Column {
         required property string modelData
@@ -59,7 +70,7 @@ GraphicsBox {
         id: generalVoteItem
 
         GeneralCardItem {
-          dataModel: root.dataModel.generalDict?.[parent.index]
+          dataModel: root.dataModel.generalDict[parent.index]
           selectable: true
           draggable: false
           chosenInBox: root.dataModel.resultInt[0] === parent.index
@@ -75,6 +86,9 @@ GraphicsBox {
             if (Lua.client.getSettings("enableFreeAssign")) {
               root.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
                 { dataModel: root.dataModel, index: parent.index });
+            } else {
+              root.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
+                { generals: [root.dataModel.generals[parent.index]] });
             }
           }
         }
@@ -119,7 +133,7 @@ GraphicsBox {
     implicitWidth: root.width - 80
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 20
+    anchors.bottomMargin: 30 + infoButton.height
     anchors.leftMargin: 40
     anchors.rightMargin: 40
     from: 0.0
@@ -162,6 +176,22 @@ GraphicsBox {
     }
   }
 
+  MetroButton {
+    id: infoButton
+    text: Lua.tr("Info")
+    anchors.horizontalCenter: progress.horizontalCenter
+    anchors.top: progress.bottom
+    anchors.topMargin: 10
+    onClicked: {
+      let results = root.dataModel.result
+      if (results.length === 0) {
+        results = root.dataModel.generals;
+      }
+      root.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
+        { generals: results });
+    }
+  }
+
   function getVote(id) {
     let ret = [];
     for (let [key, value] of Object.entries(friendsVote)) {
@@ -179,11 +209,14 @@ GraphicsBox {
     let type = data[0];
     let value = data.slice(1);
     value = value ?? -1;
-    console.log("updateData", type, value);
     if (type == "vote") {
       friendsVote[value[0]] = value[1];
       // 别问，这是神秘更新召唤函数
       root.updateHook = (root.updateHook + 1) % 10000;
+    } else if (type == "changeGeneral") {
+      const [idx, newname] = value;
+      if (root.dataModel.generals[idx] !== newname)
+        root.dataModel.changeGeneral(idx, Ltk.createGeneralCardModel(newname));
     }
   }
 }

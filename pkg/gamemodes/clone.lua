@@ -60,7 +60,18 @@ local m_clone_getLogic = function()
     local roles = self.role_table[1]
 
     local player_clone = table.simpleClone(room.players)
+    local true_players = table.filter(room.players, function(p)
+      return p.id > 0
+    end)
     room:shuffleTable(player_clone)
+    if #true_players < #player_clone then
+      table.removeOne(player_clone, true_players[1])
+      table.insert(player_clone, 1, true_players[1])
+      if true_players[2] then
+        table.removeOne(player_clone, true_players[2])
+        table.insert(player_clone, 3, true_players[2])
+      end
+    end
 
     room:arrangeSeats(player_clone)
 
