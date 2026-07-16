@@ -44,7 +44,7 @@ GraphicsBox {
   
   title.text: dataModel.promptText
 
-  width: 40 + 120 * Math.min(dataModel.generals.length, 8)
+  width: 20 + 120 * Math.min(dataModel.generals.length, 8)
   height: 300
 
   RowLayout {

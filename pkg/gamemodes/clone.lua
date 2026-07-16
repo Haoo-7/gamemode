@@ -2,7 +2,9 @@ local m_clone_desc = [[
 
 # 克隆大作战模式简介
 
-  六名玩家结成两个阵营进行对战的竞技模式。
+  <font color="red">本模式选将框数被强制锁定在4-8之间。</font>
+
+  六名玩家结成两个阵营、使用相同武将牌进行对战的竞技模式。
 
   ___
 
@@ -111,15 +113,15 @@ local m_clone_getLogic = function()
 
   function m_clone_logic:chooseGenerals()
     local room = self.room
-    local generalNum = math.min(math.max(room:getSettings('generalNum'), 4), 12)
+    local generalNum = math.min(math.max(room:getSettings('generalNum'), 4), 8)
 
-    local blacklist = { "liuzhan" }
+    local blacklist = { "liushan" }
 
     local players = room.players
     local generals = table.map(Fk:getGeneralsRandomly(
-    #players * generalNum, nil, blacklist
+    #players * generalNum, nil, blacklist, nil, room:getSettings("disableSameConvert")
     ), Util.NameMapper)
-    local a1, a2 = #generals, #players * generalNum
+    local a1, a2 = #Fk:getAllGenerals(blacklist), #players * generalNum
     if a1 < a2 then
       room:sendLog{
         type = "#NoEnoughGeneralDraw",
