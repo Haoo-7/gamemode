@@ -133,7 +133,7 @@ GraphicsBox {
     implicitWidth: root.width - 80
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 30 + infoButton.height
+    anchors.bottomMargin: 30 + buttonRow.height
     anchors.leftMargin: 40
     anchors.rightMargin: 40
     from: 0.0
@@ -176,19 +176,36 @@ GraphicsBox {
     }
   }
 
-  MetroButton {
-    id: infoButton
-    text: Lua.tr("Info")
-    anchors.horizontalCenter: progress.horizontalCenter
-    anchors.top: progress.bottom
-    anchors.topMargin: 10
-    onClicked: {
-      let results = root.dataModel.result
-      if (results.length === 0) {
-        results = root.dataModel.generals;
+  RowLayout {
+    id: buttonRow
+    spacing: 20
+    anchors.bottom: root.bottom
+    anchors.bottomMargin: 10
+    Layout.fillWidth: true
+    anchors.horizontalCenter: parent.horizontalCenter
+
+    MetroButton {
+      text: Lua.tr("Info")
+      onClicked: {
+        let results = root.dataModel.result
+        if (results.length === 0) {
+          results = root.dataModel.generals;
+        }
+        root.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
+          { generals: results });
       }
-      root.roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
-        { generals: results });
+    }
+
+    MetroButton {
+      text: Lua.tr("Same General Convert")
+      visible: !Lua.client.getSettings("disableSameConvert")
+      enabled: root.dataModel.canConvert
+      onClicked: {
+        root.roomScene.showInfoPopup(
+          Qt.createComponent("LunarLtk.Pages.InfoPopups", "SameConvert"),
+          { dataModel: root.dataModel }
+        );
+      }
     }
   }
 
