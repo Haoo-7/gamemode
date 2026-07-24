@@ -62,11 +62,12 @@ local m_clone_getLogic = function()
     local roles = self.role_table[1]
 
     local player_clone = table.simpleClone(room.players)
+    local player_length = #player_clone
     local true_players = table.filter(room.players, function(p)
       return p.id > 0
     end)
     room:shuffleTable(player_clone)
-    if #true_players < #player_clone then
+    if #true_players < #player_clone then -- 有人机时方便调试
       table.removeOne(player_clone, true_players[1])
       table.insert(player_clone, 1, true_players[1])
       if true_players[2] then
@@ -82,6 +83,9 @@ local m_clone_getLogic = function()
       p.role = roles[i]
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
+
+      p:addBuddy(player_clone[(i + 1) % player_length + 1])
+      p:addBuddy(player_clone[(i + 3) % player_length + 1])
     end
     room:setCurrent(room.players[1])
   end
@@ -214,8 +218,8 @@ local m_clone_mode = fk.CreateGameMode {
   end,
   surrender_func = function(self, playedTime)
     local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
-    { text = "clone: left you alive", passed = table.find(Fk:currentRoom().players, function(p)
-      return p.role == Self.role and p.dead and p.rest == 0
+    { text = "clone: left you alive", passed = table.every(Fk:currentRoom().players, function(p)
+      return p.role == Self.role and (p.id == Self.id or p.dead and p.rest == 0)
     end) and true } }
     return surrenderJudge
   end,
