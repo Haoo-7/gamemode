@@ -138,7 +138,6 @@ local vanished_dragon_getLogic = function()
     end
 
     local generalNum = room:getSettings('generalNum')
-    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room.players[1] -- room:getLord()
     if lord.id == room:getBanner("ShownLoyalist") then
       for _, p in ipairs(room.players) do
@@ -155,83 +154,59 @@ local vanished_dragon_getLogic = function()
       toast = true,
     }
 
-    if lord ~= nil then
-      room:setCurrent(lord)
-      table.insertTable(loyalist_list, room:tableRandomPick(room.general_pile, generalNum))
-      local lord_generals = room:askToChooseGeneral(lord, {
-        generals = loyalist_list,
-        n = n,
-      })
-      local lord_general, deputy
-      if type(lord_generals) == "table" then
-        deputy = lord_generals[2]
-        lord_general = lord_generals[1]
-      else
-        lord_general = lord_generals
-        lord_generals = {lord_general}
-      end
-      for _, g in ipairs(lord_generals) do
-        room:findGeneral(g)
-      end
+    room:setCurrent(lord)
+    table.insertTable(loyalist_list, room:tableRandomPick(room.general_pile, generalNum))
+    local lord_res = room:askToChooseIniticalGeneral(lord, {
+      targets = lord,
+      generals = loyalist_list,
+      needDeputy = room:getSettings('enableDeputy'),
+    })
 
-      room:prepareGeneral(lord, lord_general, deputy, true)
-      room:askToChooseKingdom({lord})
+    room:broadcastProperty(lord, "kingdom")
 
-      -- 显示技能
-      local canAttachSkill = function(player, skillName)
-        local skill = Fk.skills[skillName]
-        if not skill then
-          fk.qCritical("Skill: "..skillName.." doesn't exist!")
-          return false
-        end
-        if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
-          return false
-        end
-        return true
+    -- 显示技能
+    local canAttachSkill = function(player, skillName)
+      local skill = Fk.skills[skillName]
+      if not skill then
+        fk.qCritical("Skill: "..skillName.." doesn't exist!")
+        return false
       end
+      if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
+        return false
+      end
+      return true
+    end
 
-      local lord_skills = {}
-      local lord_gs = Fk.generals[lord_general]
-      for _, s in ipairs(lord_gs:getSkillNameList()) do
+    local lord_skills = {}
+    local lord_gs = Fk.generals[lord_res[lord][1]]
+    for _, s in ipairs(lord_gs:getSkillNameList()) do
+      if canAttachSkill(lord, s) then
+        table.insertIfNeed(lord_skills, s)
+      end
+    end
+    local deputyGeneral = Fk.generals[lord_res[lord][2]]
+    if deputyGeneral then
+      for _, s in ipairs(deputyGeneral:getSkillNameList()) do
         if canAttachSkill(lord, s) then
           table.insertIfNeed(lord_skills, s)
         end
       end
-      local deputyGeneral = Fk.generals[lord.deputyGeneral]
-      if deputyGeneral then
-        for _, s in ipairs(deputyGeneral:getSkillNameList()) do
-          if canAttachSkill(lord, s) then
-            table.insertIfNeed(lord_skills, s)
-          end
-        end
-      end
-      local lord_maxhp = deputyGeneral and (lord_gs.maxHp + deputyGeneral.maxHp) // 2 or lord_gs.maxHp
-      table.insert(lord_skills, (lord_maxhp <= 3 and lord_gs.gender == General.Male) and "vd_dongcha" or "vd_sheshen")
-      for _, skill in ipairs(lord_skills) do
-        room:doBroadcastNotify("AddSkill", { lord.id, skill })
-      end
+    end
+    local lord_maxhp = deputyGeneral and (lord_gs.maxHp + deputyGeneral.maxHp) // 2 or lord_gs.maxHp
+    table.insert(lord_skills, (lord_maxhp <= 3 and lord_gs.gender == General.Male) and "vd_dongcha" or "vd_sheshen")
+    for _, skill in ipairs(lord_skills) do
+      room:doBroadcastNotify("AddSkill", { lord.id, skill })
     end
 
     local nonlord = room:getOtherPlayers(lord, true)
-    local generals = room:tableRandomPick(room.general_pile, #nonlord * generalNum)
-
-    local req = Request:new(nonlord, "AskForGeneral")
-    req.timeout = self.room:getSettings('generalTimeout')
-    for i, p in ipairs(nonlord) do
-      local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
-      req:setData(p, { arg, n })
-      req:setDefaultReply(p, room:tableRandomPick(arg, n))
-    end
-
-    for _, p in ipairs(nonlord) do
-      local result = req:getResult(p)
-      local general, deputy = result[1], result[2]
-      room:findGeneral(general)
-      room:findGeneral(deputy)
-      room:prepareGeneral(p, general, deputy)
-    end
-
-    room:askToChooseKingdom(nonlord)
+    room:askToChooseIniticalGeneral(lord, {
+      targets = nonlord,
+      num = generalNum,
+      needDeputy = room:getSettings('enableDeputy'),
+      lordGeneral = lord.general,
+      lordDeputy = lord.deputyGeneral,
+      lordRole = "loyalist",
+    })
   end
 
 
