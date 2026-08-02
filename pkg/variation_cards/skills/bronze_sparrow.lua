@@ -9,12 +9,15 @@ Fk:loadTranslationTable{
 }
 
 skill:addEffect(fk.PreCardUse, {
-  can_refresh = function(self, event, target, player, data)
-    return target == player and player:hasSkill(skill.name)
+  mute = true,
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(skill.name) and
+      player:usedSkillTimes(skill.name, Player.HistoryTurn) == 0 and
+      (data.card.extra_data or {}).variation
   end,
-  on_refresh = function(self, event, target, player, data)
+  on_use = function(self, event, target, player, data)
     data.extra_data = data.extra_data or {}
-    data.extra_data.variation_type = {"@fujia", "@kongchao", "@canqu", "@zhuzhan"}
+    data.extra_data.variation_type = { "@fujia", "@kongchao", "@canqu", "@zhuzhan" }
   end,
 })
 

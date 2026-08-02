@@ -388,7 +388,7 @@ local bronze_sparrow = fk.CreateCard{
 Fk:loadTranslationTable{
   ["bronze_sparrow"] = "铜雀",
   [":bronze_sparrow"] = "装备牌·宝物<br/>"..
-  "<b>宝物技能</b>：锁定技，你使用具有应变效果的牌无需强化条件直接发动应变效果。",
+  "<b>宝物技能</b>：锁定技，你每回合首次使用具有应变效果的牌无需强化条件直接发动应变效果。",
 }
 
 extension:loadCardSkels {
