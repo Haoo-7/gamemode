@@ -101,12 +101,18 @@ local m_1v2_getLogic = function()
         addRoleModSkills(p, s)
       end
       if p.role == "lord" then
-        local skills = "m_feiyang|m_bahu"
+        local skills = {}
+        if room:getSettings("enableOLFeiyang") then
+          table.insert(skills, "ol_feiyang")
+        else
+          table.insert(skills, "m_feiyang")
+        end
+          table.insert(skills, "m_bahu")
         if room:getSettings("enableQiangyi") then
-          skills = skills .. "|m_qiangyi"
+          table.insert(skills, "m_qiangyi")
         end
         if room:getSettings("enableShiqiang") then
-          skills = skills .. "|m_shiqiang"
+          table.insert(skills, "m_shiqiang")
         end
         room:handleAddLoseSkills(p, skills, nil, false)
       end
@@ -176,6 +182,11 @@ m_1v2_mode.ui_settings = {
     title = "m_1v2_enhance_lord",
 
     W.SwitchRow {
+      _settingsKey = "enableOLFeiyang",
+      title = "m_1v2_lord_olfeiyang",
+    },
+
+    W.SwitchRow {
       _settingsKey = "enableQiangyi",
       title = "m_1v2_lord_getqiangyi",
     },
@@ -211,6 +222,8 @@ Fk:loadTranslationTable{
   ["1v2: left you alive"] = "仅剩你和地主存活",
 
   ["m_1v2_enhance_lord"] = "地主增强",
+  ["m_1v2_lord_olfeiyang"] = "地主专属技能〖飞扬〗",
+  ["help: m_1v2_lord_olfeiyang"] = "(OL) 弃置两张牌，弃置判定区所有牌(而非仅弃置一张)",
   ["m_1v2_lord_getqiangyi"] = "地主专属技能〖强易〗",
   ["help: m_1v2_lord_getqiangyi"] = "(比赛服) 每人限一次，获得其一张手牌并交还一张",
   ["m_1v2_lord_getshiqiang"] = "地主专属技能〖恃强〗",
