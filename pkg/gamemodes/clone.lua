@@ -10,7 +10,7 @@ local m_clone_desc = [[
 
   ## 阵营/座次分布
 
-  分为龙军和虎军两个阵营，以龙-虎-龙-虎-龙-虎的顺序排列座次。
+  分为龙军和虎军两个阵营，以龙-虎-龙-虎-……的顺序交替排列座次。
 
   ___
 
@@ -123,10 +123,13 @@ local m_clone_getLogic = function()
     local blacklist = { "liushan", "ofl__yingzheng" }
 
     local players = room.players
-    local generals = table.map(Fk:getGeneralsRandomly(
-    #players * generalNum, nil, blacklist, nil, room:getSettings("disableSameConvert")
-    ), Util.NameMapper)
-    local a1, a2 = #Fk:getAllGenerals(blacklist), #players * generalNum
+    local a2 = 2 * generalNum
+    local generals = table.map(table.filter(Fk:getGeneralsRandomly(
+      a2, nil, nil, nil, room:getSettings("disableSameConvert")
+    ), function(g)
+      return not table.contains(blacklist, g.trueName)
+    end), Util.NameMapper)
+    local a1 = #Fk:getAllGenerals(blacklist)
     if a1 < a2 then
       room:sendLog{
         type = "#NoEnoughGeneralDraw",
