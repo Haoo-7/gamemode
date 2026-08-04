@@ -4,7 +4,7 @@ local m_clone_desc = [[
 
   <font color="red">本模式选将框数被强制锁定在4-8之间。</font>
 
-  六名玩家结成两个阵营、使用相同武将牌进行对战的竞技模式。
+  若干名玩家结成两个阵营、使用相同武将牌进行对战的竞技模式。
 
   ___
 
@@ -22,7 +22,7 @@ local m_clone_desc = [[
 
   ## 选将流程
 
-  游戏开始前，双方各展示4张武将牌，交由阵营内三人进行限时投票。
+  游戏开始前，双方各展示4张武将牌，交由阵营内玩家进行限时投票。
 
   计时结束后，从票数最多的武将牌中选择作为本方阵营共用的武将。
 
@@ -40,7 +40,7 @@ local m_clone_desc = [[
 
   以下武将被禁止使用：
 
-  - 刘禅
+  - 刘禅 秦始皇
 ]]
 
 local m_clone_getLogic = function()
@@ -48,9 +48,6 @@ local m_clone_getLogic = function()
 
   function m_clone_logic:initialize(room)
     GameLogic.initialize(self, room)
-    self.role_table = {
-      { "loyalist", "rebel", "loyalist", "rebel", "loyalist", "rebel" },
-    }
   end
 
   function m_clone_logic:assignRoles()
@@ -59,10 +56,8 @@ local m_clone_getLogic = function()
 
   function m_clone_logic:adjustSeats()
     local room = self.room
-    local roles = self.role_table[1]
 
     local player_clone = table.simpleClone(room.players)
-    local player_length = #player_clone
     local true_players = table.filter(room.players, function(p)
       return p.id > 0
     end)
@@ -80,12 +75,18 @@ local m_clone_getLogic = function()
 
     for i = 1, #room.players do
       local p = room.players[i]
-      p.role = roles[i]
+      if i % 2 == 1 then
+        p.role = "loyalist"
+      else
+        p.role = "rebel"
+      end
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
-
-      p:addBuddy(player_clone[(i + 1) % player_length + 1])
-      p:addBuddy(player_clone[(i + 3) % player_length + 1])
+    end
+    for _, p in ipairs(room.players) do
+      for _, friend in ipairs(p:getFriends(false)) do
+        p:addBuddy(friend)
+      end
     end
     room:setCurrent(room.players[1])
   end
@@ -117,9 +118,9 @@ local m_clone_getLogic = function()
 
   function m_clone_logic:chooseGenerals()
     local room = self.room
-    local generalNum = math.min(math.max(room:getSettings('generalNum'), 4), 8)
+    local generalNum = math.min(math.max(room:getSettings("generalNum"), 4), 8)
 
-    local blacklist = { "liushan" }
+    local blacklist = { "liushan", "ofl__yingzheng" }
 
     local players = room.players
     local generals = table.map(Fk:getGeneralsRandomly(
@@ -141,7 +142,7 @@ local m_clone_getLogic = function()
 
     local data_table = {}
     local player_length = #players
-    local timeout = self.room:getSettings('generalTimeout')
+    local timeout = self.room:getSettings("generalTimeout")
     for index, to in ipairs(players) do
       local friend_ids = { players[(index + 1) % player_length + 1].id, players[(index + 3) % player_length + 1].id }
       data_table[to.id] = {
@@ -208,13 +209,12 @@ end
 
 local m_clone_mode = fk.CreateGameMode {
   name = "m_clone_mode",
-  minPlayer = 6,
-  maxPlayer = 6,
+  minPlayer = 4,
+  maxPlayer = 8,
   logic = m_clone_getLogic,
   rule = "#m_clone_rule&",
   feasible = function(self, settings)
-    local players = settings.playerNum
-    return players % 2 == 0
+    return settings.playerNum % 2 == 0
   end,
   surrender_func = function(self, playedTime)
     local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
