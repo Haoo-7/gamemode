@@ -128,9 +128,9 @@ local m_1v2_mode = fk.CreateGameMode{
   maxPlayer = 3,
   main_mode = "1v2_mode",
   logic = m_1v2_getLogic,
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 } }
-    if Self.role ~= "lord" then
+    if player.role ~= "lord" then
       table.insert(surrenderJudge, {
         text = "1v2: left you alive",
         passed = #table.filter(Fk:currentRoom().players, function(p)

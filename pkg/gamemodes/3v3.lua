@@ -481,17 +481,17 @@ local m_3v3_mode = fk.CreateGameMode{
     local players = settings.playerNum
     return players == 2 or players == 6
   end,
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     -- 若为统率 沿用1v1投降
     if Fk:currentRoom():getBanner("is_3v3_duel") then
       return { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
     end
-    if Self.role:endsWith("vanguard") then
+    if player.role:endsWith("vanguard") then
       return { { text = "vanguard_never_surrender", passed = false } }
     else
       local canSurrender = true
       if table.find(Fk:currentRoom().players, function(p)
-        return (p.rest > 0 or not p.dead) and p ~= Self and Self:isFriend(p)
+        return (p.rest > 0 or not p.dead) and p ~= player and player:isFriend(p)
       end) then
         canSurrender = false
       end

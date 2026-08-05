@@ -377,10 +377,10 @@ local jiange_mode = fk.CreateGameMode{
   minPlayer = 8,
   maxPlayer = 8,
   logic = jiange_getLogic,
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     local canSurrender = true
     if table.find(Fk:currentRoom().players, function(p)
-      return (p.rest > 0 or not p.dead) and p ~= Self and p.role == Self.role
+      return (p.rest > 0 or not p.dead) and p ~= player and p.role == player.role
     end) then
       canSurrender = false
     end

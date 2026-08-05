@@ -191,10 +191,10 @@ local m_1v3_mode = fk.CreateGameMode{
   maxPlayer = 4,
   rule = "#m_1v3_rule&",
   logic = m_1v3_getLogic,
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     local surrenderJudge = { { text = "time limitation: 5 min", passed = playedTime >= 300 },
     { text = "2v2: left you alive", passed = not table.find(Fk:currentRoom().players, function(p)
-      return p ~= Self and p.role == Self.role and not (p.dead and p.rest == 0)
+      return p ~= player and p.role == player.role and not (p.dead and p.rest == 0)
     end) } }
     return surrenderJudge
   end,

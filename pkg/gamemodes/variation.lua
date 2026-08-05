@@ -55,8 +55,8 @@ local variation = fk.CreateGameMode{
   },
   --rule = variation_rule,
   logic = Fk.game_modes["aaa_role_mode"].logic,
-  surrender_func = function(self, playedTime)
-    return Fk.game_modes["aaa_role_mode"]:surrenderFunc(self, playedTime)
+  surrender_func = function(self, playedTime, player)
+    return Fk.game_modes["aaa_role_mode"]:surrenderFunc(playedTime, player)
   end,
 }
 

@@ -170,9 +170,9 @@ local brawl_mode = fk.CreateGameMode{
   rule = "#1v2_brawl&",
   logic = brawl_getLogic,
   ui_settings = settings,
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     local surrenderJudge = { { text = "time limitation: 2 min", passed = playedTime >= 120 } }
-    if Self.role ~= "lord" then
+    if player.role ~= "lord" then
       table.insert(
         surrenderJudge,
         { text = "1v2: left you alive", passed = #table.filter(Fk:currentRoom().players, function(p) return p.rest > 0 or not p.dead end) == 2 }

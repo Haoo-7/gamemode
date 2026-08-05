@@ -221,14 +221,14 @@ local m_2v2_mode = fk.CreateGameMode{
   end,
   logic = m_2v2_getLogic,
   main_mode = "2v2_mode",
-  surrender_func = function(self, playedTime)
+  surrender_func = function(self, playedTime, player)
     -- 若为统率 沿用1v1投降
     if Fk:currentRoom():getBanner("is_2v2_duel") then
       return { { text = "time limitation: 1 min", passed = playedTime >= 60 } }
     end
     local surrenderJudge = { { text = "time limitation: 1 min", passed = playedTime >= 60 },
     { text = "2v2: left you alive", passed = table.find(Fk:currentRoom().players, function(p)
-      return p.role == Self.role and p.dead and p.rest == 0
+      return p.role == player.role and p.dead and p.rest == 0
     end) and true } }
     return surrenderJudge
   end,
