@@ -72,8 +72,9 @@ local m_clone_getLogic = function()
     end
 
     room:arrangeSeats(player_clone)
+    local player_length = #room.players
 
-    for i = 1, #room.players do
+    for i = 1, player_length do
       local p = room.players[i]
       if i % 2 == 1 then
         p.role = "loyalist"
@@ -83,9 +84,11 @@ local m_clone_getLogic = function()
       room:setPlayerProperty(p, "role_shown", true)
       room:broadcastProperty(p, "role")
     end
-    for _, p in ipairs(room.players) do
-      for _, friend in ipairs(p:getFriends(false)) do
-        p:addBuddy(friend)
+    if not room:getSettings("m_clone_blockViews") then
+      for i, p in ipairs(room.players) do
+        for j = 1, player_length / 2 do
+            p:addBuddy(room.players[(i + j * 2 - 1) % player_length + 1])
+        end
       end
     end
     room:setCurrent(room.players[1])
@@ -147,7 +150,10 @@ local m_clone_getLogic = function()
     local player_length = #players
     local timeout = self.room:getSettings("generalTimeout")
     for index, to in ipairs(players) do
-      local friend_ids = { players[(index + 1) % player_length + 1].id, players[(index + 3) % player_length + 1].id }
+      local friend_ids = {}
+      for j = 1, player_length / 2 do
+        table.insert(friend_ids, players[(index + j * 2 - 1) % player_length + 1].id)
+      end
       data_table[to.id] = {
         friends = friend_ids,
         pool = index % 2 == 0 and t2 or t1,
@@ -251,17 +257,16 @@ local m_clone_mode = fk.CreateGameMode {
   end,
 }
 
---[[ local W = require "ui_emu.preferences"
+local W = require "ui_emu.preferences"
 m_clone_mode.ui_settings = {
   W.PreferenceGroup {
     title = "Game Rule",
     W.SwitchRow {
-      _settingsKey = "_unused1",
-      title = "clone_2player",
-      enabled = false,
+      _settingsKey = "m_clone_blockViews",
+      title = "m_clone_block_views",
     }
   }
-} ]]
+}
 
 Fk:loadTranslationTable {
   ["m_clone_mode"] = "克隆大作战",
@@ -269,6 +274,8 @@ Fk:loadTranslationTable {
 
   ["time limitation: 1 min"] = "游戏时长达到1分钟",
   ["clone: left you alive"] = "你所处队伍仅剩你存活",
+
+  ["m_clone_block_views"] = "队友手牌不可见",
 
   ["#CloneVote"] = "请为你心怡的武将投下一票！",
 }
