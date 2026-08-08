@@ -46,7 +46,7 @@ rule:addEffect(fk.BeforeGameOverJudge, {
     player.tag["hulaoRest"] = true
     local onlyLvbu = #room:getOtherPlayers(room:getLord()) == 0
     if onlyLvbu then
-      room:gameOver("lord")
+      room:gameOver({ room:getLord() })
     end
   end,
 })

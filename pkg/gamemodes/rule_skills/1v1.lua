@@ -58,7 +58,7 @@ rule:addEffect(fk.GameOverJudge, {
       toast = true,
     }
     if num < 3 and num2 < 3 then return end
-    room:gameOver(player.next.role)
+    room:gameOver({ player.next })
   end,
 })
 
@@ -121,7 +121,7 @@ rule:addEffect(fk.BuryVictim, {
     table.insert(exiled_generals, player.general)
     room:setBanner(exiled_name, exiled_generals)
     if #generals == 0 then
-      room:gameOver(player.next.role)
+      room:gameOver({ player.next })
       return
     end
     local current = room.logic:getCurrentEvent()

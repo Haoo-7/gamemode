@@ -30,7 +30,7 @@ local desc_brawl = [[
 
 -- 排除部分技能
 local ban_skills = {
-  "fenyong", "danggu", -- 弱智技能
+  "fenyong", "danggu", "liuhe" -- 弱智技能
 }
 
 local U = require "packages.utility.utility"
