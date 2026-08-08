@@ -251,7 +251,7 @@ local m_2v2_mode = fk.CreateGameMode{
         return ""
       end
     end
-    return winner
+    return alive[1]:getFriends(true, true)
   end,
   reward_punish = function (self, victim, killer)
     local room = victim.room

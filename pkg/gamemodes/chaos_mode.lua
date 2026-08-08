@@ -191,13 +191,7 @@ local chaos_mode = fk.CreateGameMode{
       return not p.surrendered and not (p.dead and p.rest == 0)
     end)
     if #alive > 1 then return "" end
-    room:setPlayerProperty(alive[1], "role", "renegade") --生草
-    for _, p in ipairs(room.players) do
-      if p ~= alive[1] then
-        room:setPlayerProperty(p, "role", "rebel")
-      end
-    end
-    return "renegade"
+    return alive
   end,
   build_draw_pile = function(self)
     local draw, void = GameMode.buildDrawPile(self)

@@ -518,16 +518,17 @@ local m_3v3_mode = fk.CreateGameMode{
     if not victim.surrendered and victim.rest > 0 then
       return ""
     end
-    if victim.role == "cool_marshal" then
-      return "warm_marshal+warm_vanguard"
-    elseif victim.role == "warm_marshal" then
-      return "cool_marshal+cool_vanguard"
+    if victim.role:endsWith("_marshal") == "cool_marshal" then
+      return victim:getEnemies(true)
     end
     return ""
   end,
   get_adjusted = function(self, player)
     if player.role:endsWith("marshal") then
-      return {hp = player.hp + 1, maxHp = player.maxHp + 1}
+      return {
+        hp = player.hp + 1,
+        maxHp = player.maxHp + 1,
+      }
     end
     return {}
   end,

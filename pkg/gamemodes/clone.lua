@@ -231,22 +231,6 @@ local m_clone_mode = fk.CreateGameMode {
     end) and true } }
     return surrenderJudge
   end,
-  winner_getter = function(self, victim)
-    if not victim.surrendered and victim.rest > 0 then
-      return ""
-    end
-    local room = victim.room
-    local alive = table.filter(room.players, function(p) ---@type Player[]
-      return not p.surrendered and not (p.dead and p.rest == 0)
-    end)
-    local winner = alive[1].role
-    for _, p in ipairs(alive) do
-      if p.role ~= winner then
-        return ""
-      end
-    end
-    return winner
-  end,
   reward_punish = function (self, victim, killer)
     local room = victim.room
     for _, p in ipairs(room.alive_players) do
