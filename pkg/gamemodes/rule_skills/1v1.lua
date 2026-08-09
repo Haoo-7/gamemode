@@ -62,40 +62,6 @@ rule:addEffect(fk.GameOverJudge, {
   end,
 })
 
-local function drawInit(room, player, n, fix_ids)
-  -- TODO: need a new function to call the UI
-  local cardIds = room:tableRandomPick(room.draw_pile, n)
-  if fix_ids then
-    cardIds = room:tableRandomPick(fix_ids, n)
-    if #cardIds < n then
-      table.insertTable(cardIds, room:tableRandomPick(room.draw_pile, n - #cardIds))
-    end
-  end
-  player:addCards(Player.Hand, cardIds)
-  for _, id in ipairs(cardIds) do
-    Fk:filterCard(id, player)
-  end
-
-  local move_to_notify = {   ---@type MoveCardsDataSpec
-    moveInfo = {},
-    to = player,
-    toArea = Card.PlayerHand,
-    moveReason = fk.ReasonDraw
-  }
-  for _, id in ipairs(cardIds) do
-    table.insert(move_to_notify.moveInfo,
-    { cardId = id, fromArea = room:getCardArea(id) })
-  end
-  room:notifyMoveCards(nil, {move_to_notify})
-
-  for _, id in ipairs(cardIds) do
-    table.removeOne(room.draw_pile, id)
-    room:setCardArea(id, Card.PlayerHand, player.id)
-  end
-  room:syncDrawPile()
-  return cardIds
-end
-
 local function removeGeneral(generals, g)
   local gt = Fk.generals[g].trueName
   for i, v in ipairs(generals) do
@@ -163,10 +129,11 @@ rule:addEffect(fk.BuryVictim, {
       room:setPlayerProperty(player, "shield", Fk.generals[g].shield)
       room:revivePlayer(player, false)
       room:setPlayerProperty(player, "hp", Fk.generals[g].hp)
-      local draw_data = DrawInitialData:new{ num = math.min(player.maxHp, 5) }
-      room.logic:trigger(fk.DrawInitialCards, player, draw_data)
-      draw_data.cards = drawInit(room, player, math.min(player.maxHp, 5))
-      room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
+
+      GameEvent.DrawInitial:create(DrawInitialData:new({
+        who = { player },
+      })):exec()
+
       room.logic:trigger(U.Debut, player, player.general, false)
     end)
   end,
