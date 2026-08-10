@@ -271,7 +271,7 @@ local vanished_dragon = fk.CreateGameMode{
   rule = "#vanished_dragon_rule&",
   logic = vanished_dragon_getLogic,
   surrender_func = function(self, playedTime, player)
-    return Fk.game_modes["aaa_role_mode"].surrenderFunc(self, playedTime, player)
+    return Fk.game_modes["aaa_role_mode"]:surrenderFunc(playedTime, player)
   end,
   get_adjusted = function (self, player)
     if player.room:getBanner("ShownLoyalist") == player.id then
@@ -279,12 +279,15 @@ local vanished_dragon = fk.CreateGameMode{
     end
     return {}
   end,
+  winner_getter = function (self, victim)
+    return Fk.game_modes["aaa_role_mode"]:getWinner(victim)
+  end,
   reward_punish = function (self, victim, killer)
     if not killer or killer.dead then return end
     local shownLoyalist = victim.room:getBanner("ShownLoyalist")
     if victim.role == "loyalist" and ((killer.role == "lord" and killer.role_shown) or killer.id == shownLoyalist) then
       killer:throwAllCards("he")
-    elseif victim.role == "rebel" or victim.id == shownLoyalist then
+    elseif victim.role == "rebel" or victim.id == shownLoyalist or killer.role == "wild" then
       killer:drawCards(3, "kill")
     end
   end,
