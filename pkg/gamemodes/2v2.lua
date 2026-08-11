@@ -235,7 +235,7 @@ local m_2v2_mode = fk.CreateGameMode{
   winner_getter = function(self, victim)
     -- 若为统率 直接结束游戏
     if victim.surrendered and Fk:currentRoom():getBanner("is_2v2_duel") then
-      return victim.role == "loyalist" and "rebel" or "loyalist"
+      return victim:getEnemies(true)
     end
     if not victim.surrendered and victim.rest > 0 then
       return ""
