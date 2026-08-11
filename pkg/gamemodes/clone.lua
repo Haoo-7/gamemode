@@ -124,9 +124,10 @@ local m_clone_getLogic = function()
     local generalNum = math.min(math.max(room:getSettings("generalNum"), 4), 8)
 
     local blacklist = { "liushan", "ofl__yingzheng" }
+    local allSame = self.room:getSettings("m_clone_allOnes")
 
     local players = room.players
-    local a2 = 2 * generalNum
+    local a2 = (allSame and 1 or 2) * generalNum
     local generals = table.map(table.filter(Fk:getGeneralsRandomly(
       a2, nil, nil, nil, room:getSettings("disableSameConvert")
     ), function(g)
@@ -144,19 +145,24 @@ local m_clone_getLogic = function()
     end
     room:shuffleTable(generals)
     local t1 = table.slice(generals, 1, generalNum + 1)
-    local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
+    local t2 = allSame and table.simpleClone(t1) or table.slice(generals, generalNum + 1, generalNum * 2 + 1)
 
     local data_table = {}
     local player_length = #players
     local timeout = self.room:getSettings("generalTimeout")
     for index, to in ipairs(players) do
       local friend_ids = {}
-      for j = 1, player_length / 2 do
-        table.insert(friend_ids, players[(index + j * 2 - 1) % player_length + 1].id)
+      if allSame then
+        friend_ids = table.map(table.filter(players, function(p)
+        return p ~= to
+      end), Util.IdMapper)
+      else
+        for j = 1, player_length / 2 do
+          table.insert(friend_ids, players[(index + j * 2 - 1) % player_length + 1].id)
+        end
       end
       data_table[to.id] = {
-        friends = friend_ids,
-        pool = index % 2 == 0 and t2 or t1,
+        pool = allSame and t1 or (index % 2 == 0 and t2 or t1),
         prop = {
           friends = friend_ids,
           timeout = timeout
@@ -172,7 +178,7 @@ local m_clone_getLogic = function()
     })
     local pool1, pool2 = {}, {}
     for _, p in ipairs(players) do
-      local target_pool = p.role == "loyalist" and pool1 or pool2
+      local target_pool = allSame and pool1 or (p.role == "loyalist" and pool1 or pool2)
       if p.id > 0 then
         -- 人机投票不计入
         local general = req:getResult(p)[1] or (p.role == "loyalist" and t1 or t2)[1]
@@ -192,22 +198,28 @@ local m_clone_getLogic = function()
     end
     max_general = pool_max[1] and room:tableRandomPick(pool_max) or t1[1]
     room:findGeneral(max_general)
-    for i = 1, player_length, 2 do
-      room:setPlayerGeneral(players[i], max_general, true, true)
-    end
-    pool_max, max = {}, 1
-    for general, count in pairs(pool2) do
-      if count > max then
-        max = count
-        pool_max = { general }
-      elseif count == max then
-        table.insert(pool_max, general)
+    if allSame then
+      for i = 1, player_length do
+        room:setPlayerGeneral(players[i], max_general, true, true)
       end
-    end
-    max_general = pool_max[1] and room:tableRandomPick(pool_max) or t2[1]
-    room:findGeneral(max_general)
-    for i = 2, player_length, 2 do
-      room:setPlayerGeneral(players[i], max_general, true, true)
+    else
+      for i = 1, player_length, 2 do
+        room:setPlayerGeneral(players[i], max_general, true, true)
+      end
+      pool_max, max = {}, 1
+      for general, count in pairs(pool2) do
+        if count > max then
+          max = count
+          pool_max = { general }
+        elseif count == max then
+          table.insert(pool_max, general)
+        end
+      end
+      max_general = pool_max[1] and room:tableRandomPick(pool_max) or t2[1]
+      room:findGeneral(max_general)
+      for i = 2, player_length, 2 do
+        room:setPlayerGeneral(players[i], max_general, true, true)
+      end
     end
 
     room:askToChooseKingdom(players)
@@ -248,6 +260,11 @@ m_clone_mode.ui_settings = {
     W.SwitchRow {
       _settingsKey = "m_clone_blockViews",
       title = "m_clone_block_views",
+    },
+    W.SwitchRow {
+      _settingsKey = "m_clone_allOnes",
+      title = "m_clone_all_ones",
+      subTitle = ":m_clone_all_ones",
     }
   }
 }
@@ -260,6 +277,11 @@ Fk:loadTranslationTable {
   ["clone: left you alive"] = "你所处队伍仅剩你存活",
 
   ["m_clone_block_views"] = "队友手牌不可见",
+  ["#m_clone_block_views"] = "队友手牌不可见",
+
+  ["m_clone_all_ones"] = "全同模式",
+  [":m_clone_all_ones"] = "所有玩家一起投票，票数最多的武将作为双方阵营共用武将",
+  ["#m_clone_all_ones"] = "所有玩家共用武将",
 
   ["#CloneVote"] = "请为你心怡的武将投下一票！",
 }
@@ -272,7 +294,7 @@ Fk:addMiniGame {
   end,
   update_func = function(player, data)
     local room = player.room
-    local d = player.mini_game_data.data
+    local d = player.mini_game_data.data.prop
     for _, friend_id in ipairs(d.friends) do
       room:getPlayerById(friend_id):doNotify("UpdateMiniGame", data)
     end
