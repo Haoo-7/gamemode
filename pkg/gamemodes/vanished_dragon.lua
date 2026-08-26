@@ -125,6 +125,8 @@ local vanished_dragon_getLogic = function()
       -- 暴露暗主
       "js__caocao", "js__zhugeliang", "ol__dongzhao", "std__yuanshu", "huanghao", "mou__guanyu", "godlusu",
       "mobile__yuanshu", "m_ex__yuanshu", "guandu__xuyou",
+      -- 傻逼武将
+      "ofl__yingzheng", "wuzhao",
     }
     local loyalist_list = {}
     for i = #room.general_pile, 1, -1 do
