@@ -107,7 +107,7 @@ local m_1v2_getLogic = function()
         else
           table.insert(skills, "m_feiyang")
         end
-          table.insert(skills, "m_bahu")
+        table.insert(skills, "m_bahu")
         if room:getSettings("enableQiangyi") then
           table.insert(skills, "m_qiangyi")
         end
@@ -133,12 +133,11 @@ local m_1v2_mode = fk.CreateGameMode{
     if player.role ~= "lord" then
       table.insert(surrenderJudge, {
         text = "1v2: left you alive",
-        passed = #table.filter(Fk:currentRoom().players, function(p)
+        passed = not table.every(Fk:currentRoom().players, function(p)
           return p.rest > 0 or not p.dead
-        end) == 2
+        end)
       })
     end
-
     return surrenderJudge
   end,
   get_adjusted = function (self, player)

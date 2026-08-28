@@ -185,7 +185,7 @@ GraphicsBox {
     anchors.horizontalCenter: parent.horizontalCenter
 
     MetroButton {
-      text: Lua.tr("Info")
+      text: Lua.tr("Show General Detail")
       onClicked: {
         let results = root.dataModel.result
         if (results.length === 0) {
@@ -215,9 +215,6 @@ GraphicsBox {
       if (value == id) {
         ret.push(key);
       }
-    }
-    if (root.dataModel.resultInt.includes(id)) {
-      ret.push(Lua.selfPlayer.id);
     }
     return ret.map(e => friendsAvatar[e]);
   }

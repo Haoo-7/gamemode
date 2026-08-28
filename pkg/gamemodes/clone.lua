@@ -186,7 +186,7 @@ local m_clone_getLogic = function()
       end
     end
     --- 实际武将赋值
-    local pool_max, max = {}, 1
+    local pool_max, max = {}, 0
     local max_general
     for general, count in pairs(pool1) do
       if count > max then
