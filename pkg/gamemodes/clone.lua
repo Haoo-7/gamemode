@@ -230,13 +230,9 @@ end
 
 local m_clone_mode = fk.CreateGameMode {
   name = "m_clone_mode",
-  minPlayer = 4,
-  maxPlayer = 8,
+  playerNums = {4, 6, 8},
   logic = m_clone_getLogic,
   rule = "#m_clone_rule&",
-  feasible = function(self, settings)
-    return settings.playerNum % 2 == 0
-  end,
   surrender_func = function(self, playedTime, player)
     local surrenderJudge = { { text = "clone: left you alive", passed = table.every(Fk:currentRoom().players, function(p)
       return p.role ~= player.role or (p == player or (p.dead and p.rest == 0))

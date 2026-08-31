@@ -473,14 +473,9 @@ end
 
 local m_3v3_mode = fk.CreateGameMode{
   name = "m_3v3_mode",
-  minPlayer = 2,
-  maxPlayer = 6,
+  playerNums = {2, 6},
   logic = m_3v3_getLogic,
   rule = "#m_3v3_rule&",
-  feasible = function(self, settings)
-    local players = settings.playerNum
-    return players == 2 or players == 6
-  end,
   surrender_func = function(self, playedTime, player)
     -- 若为统率 沿用1v1投降
     if Fk:currentRoom():getBanner("is_3v3_duel") then

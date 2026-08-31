@@ -122,7 +122,7 @@ local m_2v2_getLogic = function()
     local room = self.room
     local generalNum = math.min(room:getSettings('generalNum'), 9)
 
-    local lord = room:getLord()
+    local lord = room:getLord() ---@cast lord -nil
     room:setCurrent(lord)
     lord.role = self.start_role
     for _, p in ipairs(room.players) do
@@ -212,13 +212,8 @@ end
 
 local m_2v2_mode = fk.CreateGameMode{
   name = "m_2v2_mode",
-  minPlayer = 2,
-  maxPlayer = 4,
+  playerNums = {2, 4},
   rule = "#m_2v2_rule&",
-  feasible = function(self, settings)
-    local players = settings.playerNum
-    return players == 2 or players == 4
-  end,
   logic = m_2v2_getLogic,
   main_mode = "2v2_mode",
   surrender_func = function(self, playedTime, player)
