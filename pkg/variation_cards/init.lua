@@ -2,7 +2,6 @@
 
 local extension = Package:new("variation_cards", Package.CardPack)
 extension.extensionName = "gamemode"
-extension.game_modes_blacklist = {"m_1v1_mode", "m_1v2_mode", "m_2v2_mode"}
 
 extension:loadSkillSkelsByPath("./packages/gamemode/pkg/variation_cards/skills")
 
