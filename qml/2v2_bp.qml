@@ -69,17 +69,22 @@ GraphicsBox {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: Lua.tr("2v2_bp_banning")
-          color: "#E4D5A0"
-          font.pixelSize: 16
+          color: "#FFD700"
+          font.family: Config.libianName
+          font.pixelSize: 20
+          style: Text.Outline
+          styleColor: "black"
         }
 
         Text {
           id: countdownText
           anchors.verticalCenter: parent.verticalCenter
           text: Math.max(0, Math.ceil(progress.value / 100 * root.effectiveTimeout())) + "s"
-          color: "white"
+          color: "#FFD700"
           font.pixelSize: 22
           font.bold: true
+          style: Text.Outline
+          styleColor: "black"
         }
 
         ProgressBar {
@@ -93,15 +98,17 @@ GraphicsBox {
 
           background: Rectangle {
             implicitHeight: 12
-            color: "black"
+            color: "#66000000"
             radius: 6
+            border.width: 1
+            border.color: "#88C9A063"
           }
 
           contentItem: Rectangle {
             radius: 6
             gradient: Gradient {
-              GradientStop { position: 0.0; color: "orange" }
-              GradientStop { position: 1.0; color: "red" }
+              GradientStop { position: 0.0; color: "#F7C873" }
+              GradientStop { position: 1.0; color: "#D4A642" }
             }
           }
         }
@@ -127,6 +134,15 @@ GraphicsBox {
       id: gridArea
       Layout.fillWidth: true
       Layout.fillHeight: true
+
+      // FreeKill 风格暗色面板
+      Rectangle {
+        anchors.fill: parent
+        radius: 10
+        color: "#33000000"
+        border.width: 1
+        border.color: "#66C9A063"
+      }
 
       Grid {
         id: generalGrid
@@ -166,23 +182,24 @@ GraphicsBox {
                 z: 4
               }
 
-              // 禁将遮罩 + 禁字
+              // 禁将遮罩（暗化）
               Rectangle {
                 anchors.fill: parent
-                color: "#555555"
-                opacity: 0.6
+                color: "#444444"
+                opacity: 0.55
                 visible: isBanned
                 z: 5
               }
 
+              // "禁"字（无填充背景，置于暗化遮罩之上）
               Text {
                 text: "禁"
-                color: "red"
-                font.pixelSize: 42
-                font.bold: true
+                anchors.centerIn: parent
+                color: "#FF5252"
+                font.family: Config.li2Name
+                font.pixelSize: 34
                 style: Text.Outline
                 styleColor: "black"
-                anchors.centerIn: parent
                 visible: isBanned
                 z: 6
               }
@@ -228,11 +245,19 @@ GraphicsBox {
     }
 
     // 玩家信息栏：头像 + 名称 + 汉字座位号，当前禁将者高亮
-    Row {
-      id: playerBar
+    Rectangle {
       Layout.alignment: Qt.AlignHCenter
-      Layout.preferredHeight: 132
-      spacing: 48
+      Layout.preferredHeight: 140
+      radius: 10
+      color: "#33000000"
+      border.width: 1
+      border.color: "#66C9A063"
+      implicitWidth: playerBar.width + 24
+
+      Row {
+        id: playerBar
+        anchors.centerIn: parent
+        spacing: 48
 
       Repeater {
         model: {
@@ -308,6 +333,7 @@ GraphicsBox {
           }
         }
       }
+    }
     }
   }
 

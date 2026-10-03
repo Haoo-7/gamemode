@@ -187,8 +187,10 @@ GraphicsBox {
       Rectangle {
         width: parent.width
         height: 58
-        radius: 4
-        color: "#00000055"
+        radius: 6
+        color: "#55000000"
+        border.width: 1
+        border.color: "#66C9A063"
         clip: true
 
         ListView {
@@ -213,12 +215,15 @@ GraphicsBox {
               color: "#80000000"
             }
 
+            // "禁"字（无填充背景，置于暗化遮罩之上）
             Text {
               text: "禁"
-              color: "red"
-              font.pixelSize: 18
-              font.bold: true
               anchors.centerIn: parent
+              color: "#FF5252"
+              font.family: Config.li2Name
+              font.pixelSize: 22
+              style: Text.Outline
+              styleColor: "black"
             }
           }
         }
@@ -228,8 +233,10 @@ GraphicsBox {
       Rectangle {
         width: parent.width
         height: Math.min(root.reserveNum, 5) * 70
-        radius: 4
-        color: "#00000055"
+        radius: 6
+        color: "#55000000"
+        border.width: 1
+        border.color: "#66C9A063"
         clip: true
 
         ListView {
@@ -286,13 +293,17 @@ GraphicsBox {
         height: 38
         radius: 6
         color: root.turnRole === "loyalist" ? "#C4A255" : "#4DB6AC"
+        border.width: 1
+        border.color: root.turnRole === "loyalist" ? "#88B8860B" : "#882E7D76"
 
         Text {
           anchors.centerIn: parent
           text: Lua.tr("2v2_reserve_prepick").arg(root.count)
           color: "white"
-          font.pixelSize: 18
-          font.bold: true
+          font.family: Config.libianName
+          font.pixelSize: 20
+          style: Text.Outline
+          styleColor: "black"
         }
       }
 
@@ -301,6 +312,15 @@ GraphicsBox {
         id: centerGridArea
         width: parent.width
         height: parent.height - 85
+
+        // FreeKill 风格暗色面板
+        Rectangle {
+          anchors.fill: parent
+          radius: 10
+          color: "#33000000"
+          border.width: 1
+          border.color: "#66C9A063"
+        }
 
         Grid {
           id: centerGrid
@@ -417,8 +437,10 @@ GraphicsBox {
       Rectangle {
         width: parent.width
         height: 58
-        radius: 4
-        color: "#00000055"
+        radius: 6
+        color: "#55000000"
+        border.width: 1
+        border.color: "#66C9A063"
         clip: true
 
         ListView {
@@ -443,12 +465,15 @@ GraphicsBox {
               color: "#80000000"
             }
 
+            // "禁"字（无填充背景，置于暗化遮罩之上）
             Text {
               text: "禁"
-              color: "red"
-              font.pixelSize: 18
-              font.bold: true
               anchors.centerIn: parent
+              color: "#FF5252"
+              font.family: Config.li2Name
+              font.pixelSize: 22
+              style: Text.Outline
+              styleColor: "black"
             }
           }
         }
@@ -458,8 +483,10 @@ GraphicsBox {
       Rectangle {
         width: parent.width
         height: Math.min(root.reserveNum, 5) * 70
-        radius: 4
-        color: "#00000055"
+        radius: 6
+        color: "#55000000"
+        border.width: 1
+        border.color: "#66C9A063"
         clip: true
 
         ListView {
