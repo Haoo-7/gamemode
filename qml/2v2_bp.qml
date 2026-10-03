@@ -28,6 +28,20 @@ GraphicsBox {
   property int selfId: -1
   property int selectedIdx: -1
   property bool autoTurn: false
+  property string recommendGeneral: ""
+  property int recommendFrom: -1
+
+  // 判断两个玩家是否同队（1、4号位忠臣，2、3号位反贼）
+  function isSameTeam(aId, bId) {
+    const ps = root.roomScene.dataModel.players;
+    let aSeat = -1, bSeat = -1;
+    for (let i = 0; i < ps.length; i++) {
+      if (ps[i].playerid === aId) aSeat = ps[i].seatNumber;
+      if (ps[i].playerid === bId) bSeat = ps[i].seatNumber;
+    }
+    const team = s => (s === 1 || s === 4) ? 1 : 2;
+    return team(aSeat) === team(bSeat);
+  }
 
   movable: false
   width: roomScene.width
@@ -173,16 +187,31 @@ GraphicsBox {
                 z: 6
               }
 
+              // 队友推荐标记（与选将阶段推荐样式一致，置于卡框内部底部；同队可见）
+              Image {
+                source: AppPath + "/packages/gamemode/image/" +
+                  (root.recommendFrom === root.selfId ? "recommend2.png" : "recommend.png")
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 6
+                anchors.horizontalCenter: parent.horizontalCenter
+                scale: 0.75
+                z: 8
+                visible: root.isSameTeam(root.selfId, root.turnId) && root.recommendGeneral === modelData
+              }
+
               onClicked: {
-                if (root.selfId !== root.turnId) return; // 非自己的禁将回合
-                if (isBanned) return;                     // 已被禁的武将不可再选
-                if (isSelected) {
-                  // 第二次点击同一武将：确认禁将
-                  root.selectedIdx = -1;
-                  ClientInstance.notifyServer("PushRequest", "updatemini,ban," + modelData);
-                } else {
-                  // 第一次点击：选中（切换选中目标）
-                  root.selectedIdx = index;
+                if (root.selfId === root.turnId) {
+                  // 自己是当前禁将者：正常选中/禁将
+                  if (isBanned) return;
+                  if (isSelected) {
+                    root.selectedIdx = -1;
+                    ClientInstance.notifyServer("PushRequest", "updatemini,ban," + modelData);
+                  } else {
+                    root.selectedIdx = index;
+                  }
+                } else if (root.isSameTeam(root.selfId, root.turnId)) {
+                  // 同队队友：点击向当前禁将者推荐
+                  ClientInstance.notifyServer("PushRequest", "updatemini,recommend," + modelData);
                 }
               }
 
@@ -324,7 +353,12 @@ GraphicsBox {
       root.turnId = st.turnId;
       root.autoTurn = st.autoTurn ?? false;
       root.selectedIdx = -1;
+      root.recommendGeneral = "";
       root.restartCountdown();
+    } else if (type === "recommend") {
+      // 同队队友推荐/取消推荐的武将（仅同队成员收到）
+      root.recommendGeneral = data[1].general;
+      root.recommendFrom = data[1].fromId ?? -1;
     } else if (type === "finished") {
       // 所有队伍轮询禁将完毕，回复并关闭本窗口
       ClientInstance.replyToServer("", "");

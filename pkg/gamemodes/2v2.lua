@@ -105,6 +105,7 @@ local function m_2v2_bpNextTurnState(room, st)
   st.turnId = nextId
   st.curPos = newPos
   st.autoTurn = not m_2v2_bpIsOnline(room, nextId)
+  st.recommend = nil
   return true
 end
 
@@ -226,6 +227,7 @@ local function m_2v2_reserveFirstTurn(room, st)
     st.turnId = st.playerBySeat[t.seat]
     st.count = t.count
     st.turnRole = m_2v2_bpTeamOfSeat(t.seat)
+    st.recommend = nil
     if st.count > #st.pool then
       -- 将池不足：随机补入并继续下一轮
       m_2v2_reserveRandomFill(room, st)
@@ -248,6 +250,7 @@ local function m_2v2_reserveAdvance(room, st)
     st.turnId = st.playerBySeat[t.seat]
     st.count = t.count
     st.turnRole = m_2v2_bpTeamOfSeat(t.seat)
+    st.recommend = nil
     if st.count > #st.pool then
       m_2v2_reserveRandomFill(room, st)
       st.turnIdx = st.turnIdx + 1
@@ -372,7 +375,8 @@ local m_2v2_getLogic = function()
       local bpPoolNum = math.max(12, math.min(room:getSettings("bpGeneralNum") or 24, 40))
       local bpBanNum = math.max(1, math.min(room:getSettings("bpBanNum") or 2, math.floor(bpPoolNum / 4)))
       local bpReserveNum = math.max(2, math.min(room:getSettings("bpReserveNum") or 5, 10))
-      local bpTimeout = math.max(15, math.min(room:getSettings("bpTimeout") or room:getSettings('generalTimeout') or room.timeout, 60))
+      local bpTimeout = math.max(15,
+        math.min(room:getSettings("bpTimeout") or room:getSettings('generalTimeout') or room.timeout, 60))
       local bpGenerals = table.map(Fk:getGeneralsRandomly(bpPoolNum), Util.NameMapper)
 
       local st = {
@@ -778,7 +782,7 @@ Fk:loadTranslationTable {
   ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置两张手牌，弃置自己判定区的一张牌",
 
   ["m_2v2_bp"] = "十周年禁将BP",
-  ["help: m_2v2_bp"] = "开启后启用十周年禁将BP规则，可设置所有玩家待选将池数量、每支队伍禁将数量与备选数量",
+  ["help: m_2v2_bp"] = "开启后启用十周年禁将BP规则，可设置所有玩家待选将池数量、每支队伍禁将数量与备选数量；开启时自动将房间人数设为4，仅限4人生效",
   ["m_2v2_bp_timeout"] = "禁将时间",
   ["help: m_2v2_bp_timeout"] = "每轮禁将的倒计时时间，不得低于15秒，不得超过60秒，默认与选将时间一致",
   ["m_2v2_bp_pool"] = "所有玩家待选将池数量",
@@ -846,6 +850,30 @@ Fk:addMiniGame {
         end
         m_2v2_bpAdvance(room, st)
       end
+    elseif typ == "recommend" then
+      -- 同队队友向当前禁将者推荐武将（转发给当前轮玩家与推荐者本人）；
+      -- 再次点击同一武将则取消推荐
+      local name = data[2]
+      if player.id ~= st.turnId then
+        local active = room:getPlayerById(st.turnId)
+        if active and
+            m_2v2_bpTeamOfSeat(room:getPlayerById(player.id).seat) ==
+            m_2v2_bpTeamOfSeat(active.seat) and
+            table.find(st.generals, function(g) return g == name end) and
+            not table.find(st.bans, function(b) return b.general == name end) then
+          if st.recommend and st.recommend.fromId == player.id and st.recommend.general == name then
+            st.recommend = nil
+            local notify = { "recommend", { general = "", fromId = player.id } }
+            active:doNotify("UpdateMiniGame", notify)
+            player:doNotify("UpdateMiniGame", notify)
+          else
+            st.recommend = { fromId = player.id, general = name }
+            local notify = { "recommend", { general = name, fromId = player.id } }
+            active:doNotify("UpdateMiniGame", notify)
+            player:doNotify("UpdateMiniGame", notify)
+          end
+        end
+      end
     end
   end,
 }
@@ -888,6 +916,29 @@ Fk:addMiniGame {
           m_2v2_reserveRandomFill(room, st)
         end
         m_2v2_reserveAdvance(room, st)
+      end
+    elseif typ == "recommend" then
+      -- 同队队友向当前备选玩家推荐武将（转发给当前轮玩家与推荐者本人）；
+      -- 再次点击同一武将则取消推荐
+      local name = data[2]
+      if player.id ~= st.turnId then
+        local active = room:getPlayerById(st.turnId)
+        if active and
+            m_2v2_bpTeamOfSeat(room:getPlayerById(player.id).seat) ==
+            m_2v2_bpTeamOfSeat(active.seat) and
+            table.find(st.pool, function(g) return g == name end) then
+          if st.recommend and st.recommend.fromId == player.id and st.recommend.general == name then
+            st.recommend = nil
+            local notify = { "recommend", { general = "", fromId = player.id } }
+            active:doNotify("UpdateMiniGame", notify)
+            player:doNotify("UpdateMiniGame", notify)
+          else
+            st.recommend = { fromId = player.id, general = name }
+            local notify = { "recommend", { general = name, fromId = player.id } }
+            active:doNotify("UpdateMiniGame", notify)
+            player:doNotify("UpdateMiniGame", notify)
+          end
+        end
       end
     end
   end,

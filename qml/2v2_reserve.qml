@@ -36,6 +36,20 @@ GraphicsBox {
   property int selfId: -1
   property var selected: []
   property bool autoTurn: false
+  property string recommendGeneral: ""
+  property int recommendFrom: -1
+
+  // 判断两个玩家是否同队（1、4号位忠臣，2、3号位反贼）
+  function isSameTeam(aId, bId) {
+    const ps = root.roomScene.dataModel.players;
+    let aSeat = -1, bSeat = -1;
+    for (let i = 0; i < ps.length; i++) {
+      if (ps[i].playerid === aId) aSeat = ps[i].seatNumber;
+      if (ps[i].playerid === bId) bSeat = ps[i].seatNumber;
+    }
+    const team = s => (s === 1 || s === 4) ? 1 : 2;
+    return team(aSeat) === team(bSeat);
+  }
 
   movable: false
   width: roomScene.width
@@ -337,16 +351,31 @@ GraphicsBox {
                   z: 4
                 }
 
+                // 队友推荐标记（与选将阶段推荐样式一致，置于卡框内部底部；同队可见）
+                Image {
+                  source: AppPath + "/packages/gamemode/image/" +
+                    (root.recommendFrom === root.selfId ? "recommend2.png" : "recommend.png")
+                  anchors.bottom: parent.bottom
+                  anchors.bottomMargin: 6
+                  anchors.horizontalCenter: parent.horizontalCenter
+                  scale: 0.75
+                  z: 8
+                  visible: root.isSameTeam(root.selfId, root.turnId) && root.recommendGeneral === modelData
+                }
+
                 onClicked: {
-                  if (root.selfId !== root.turnId) return; // 非自己的轮次
-                  if (isSelected) {
-                    // 取消选中
-                    root.selected = root.selected.filter(n => n !== modelData);
-                  } else if (root.selected.length < root.count) {
-                    // 选中（不超过本轮应选数量）
-                    const sel = root.selected.slice();
-                    sel.push(modelData);
-                    root.selected = sel;
+                  if (root.selfId === root.turnId) {
+                    // 自己是当前备选玩家：正常选中
+                    if (isSelected) {
+                      root.selected = root.selected.filter(n => n !== modelData);
+                    } else if (root.selected.length < root.count) {
+                      const sel = root.selected.slice();
+                      sel.push(modelData);
+                      root.selected = sel;
+                    }
+                  } else if (root.isSameTeam(root.selfId, root.turnId)) {
+                    // 同队队友：点击向当前备选玩家推荐
+                    ClientInstance.notifyServer("PushRequest", "updatemini,recommend," + modelData);
                   }
                 }
 
@@ -558,7 +587,12 @@ GraphicsBox {
       root.loyalReserve = st.loyalReserve ?? [];
       root.reserveNum = st.reserveNum ?? root.reserveNum;
       root.selected = [];
+      root.recommendGeneral = "";
       root.restartCountdown();
+    } else if (type === "recommend") {
+      // 同队队友推荐/取消推荐的武将（仅同队成员收到）
+      root.recommendGeneral = data[1].general;
+      root.recommendFrom = data[1].fromId ?? -1;
     } else if (type === "finished") {
       // 全部轮次完成，回复并关闭本窗口
       ClientInstance.replyToServer("", "");
