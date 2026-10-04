@@ -541,21 +541,19 @@ local m_2v2_getLogic = function()
         room:findGeneral(glist[i])
       end
     else
-      -- 选将框（BP 开启与否同款）：同队共用将池，实时同步、可互相推荐、确认后锁定
+      -- 十周年禁将BP开启时：选将将池来自队伍备选池（同队共用一份、实时同步、确认后锁定）
       local rsv = room:getBanner("2v2_reserve_state")
       local t1, t2, t3, t4
       if rsv then
-        -- BP 开启：将池来自队伍备选池
         t1 = rsv.loyalReserve
         t2 = rsv.rebelReserve
         t3 = rsv.rebelReserve
         t4 = rsv.loyalReserve
       else
-        -- 未开启 BP：随机生成将池，同队（1&4、2&3）各共用一份
         t1 = table.slice(generals, 1, generalNum + 1)
         t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
-        t3 = t2
-        t4 = t1
+        t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
+        t4 = table.slice(generals, generalNum * 3 + 1, generalNum * 4 + 1)
       end
       local req = room:askToMiniGame(nonlord, {
         skill_name = "AskForGeneral",
@@ -565,45 +563,53 @@ local m_2v2_getLogic = function()
             friend_id = nonlord[4].id,
             me = t1,
             friend = t4,
-            shared = true,
+            shared = rsv and true or nil,
           },
           [nonlord[2].id] = {
             friend_id = nonlord[3].id,
             me = t2,
             friend = t3,
-            shared = true,
+            shared = rsv and true or nil,
           },
           [nonlord[3].id] = {
             friend_id = nonlord[2].id,
             me = t3,
             friend = t2,
-            shared = true,
+            shared = rsv and true or nil,
           },
           [nonlord[4].id] = {
             friend_id = nonlord[1].id,
             me = t4,
             friend = t1,
-            shared = true,
+            shared = rsv and true or nil,
           },
         },
         timeout = self.room:getSettings('generalTimeout'),
       })
-      -- 同队共用将池：处理超时/选重，保证同队两人所选武将不重复
-      local takenLoyal, takenRebel = {}, {}
-      for _, p in ipairs(nonlord) do
-        local isLoyal = (p.seat == 1 or p.seat == 4)
-        local pool = isLoyal and t1 or t2
-        local taken = isLoyal and takenLoyal or takenRebel
-        local general = req:getResult(p)
-        if general == "" or taken[general] then
-          local avail = table.filter(pool, function(g) return not taken[g] end)
-          if #avail > 0 then
-            general = room:tableRandomPick(avail, 1)[1]
+      if rsv then
+        -- 同队共用将池：处理超时/选重，保证同队两人所选武将不重复
+        local takenLoyal, takenRebel = {}, {}
+        for _, p in ipairs(nonlord) do
+          local isLoyal = (p.seat == 1 or p.seat == 4)
+          local pool = isLoyal and rsv.loyalReserve or rsv.rebelReserve
+          local taken = isLoyal and takenLoyal or takenRebel
+          local general = req:getResult(p)
+          if general == "" or taken[general] then
+            local avail = table.filter(pool, function(g) return not taken[g] end)
+            if #avail > 0 then
+              general = room:tableRandomPick(avail, 1)[1]
+            end
           end
+          taken[general] = true
+          room:setPlayerGeneral(p, general, true, true)
+          room:findGeneral(general)
         end
-        taken[general] = true
-        room:setPlayerGeneral(p, general, true, true)
-        room:findGeneral(general)
+      else
+        for _, p in ipairs(nonlord) do
+          local general = req:getResult(p)
+          room:setPlayerGeneral(p, general, true, true)
+          room:findGeneral(general)
+        end
       end
       room:setBanner("2v2_reserve_state", nil)
     end
