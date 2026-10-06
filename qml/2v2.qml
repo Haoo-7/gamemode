@@ -190,8 +190,8 @@ GraphicsBox {
 
       MetroButton {
         id: convertBtn
-        // visible: !convertDisabled
-        enabled: chooseGeneralModel.canConvert
+        visible: !Lua.client.getSettings("disableSameConvert")
+        enabled: visible && chooseGeneralModel.canConvert
         text: Lua.tr("Same General Convert")
         onClicked: {
           roomScene.showInfoPopup(
