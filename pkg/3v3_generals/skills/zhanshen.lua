@@ -1,6 +1,7 @@
 local zhanshen = fk.CreateSkill {
   name = "zhanshen",
   tags = { Skill.Wake },
+  related_skills = { "mashu", "shenji" },
 }
 
 Fk:loadTranslationTable{

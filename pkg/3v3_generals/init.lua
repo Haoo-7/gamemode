@@ -54,9 +54,7 @@ Fk:loadTranslationTable{
   ["~v33__zhaoyun"] = "这，就是失败的滋味吗？",
 }
 
-local nos_lvbu = General:new(extension, "v33_nos__lvbu", "qun", 4)
-nos_lvbu:addSkills { "wushuang", "zhanshen" }
-nos_lvbu:addRelatedSkills { "mashu", "shenji" }
+General:new(extension, "v33_nos__lvbu", "qun", 4):addSkills { "wushuang", "zhanshen" }
 Fk:loadTranslationTable{
   ["v33_nos__lvbu"] = "吕布",
   ["#v33_nos__lvbu"] = "武的化身",

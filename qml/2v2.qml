@@ -19,6 +19,7 @@ GraphicsBox {
   property int my_recommend: -1
   property int selected: -1
   property bool initial: true
+  property bool shared: false
 
   width: 70 + 100 * my_cards.length
   height: 360
@@ -145,7 +146,8 @@ GraphicsBox {
           required property string modelData
           required property int index
           dataModel: Ltk.createGeneralCardModel(modelData)
-          selectable: true
+          // 同队共用将池时：队友确认选择的武将，本方不可再选
+          selectable: root.shared ? (root.friend_selected !== index) : true
           chosenInBox: root.selected == index
           selected: root.selected == index
           onClicked: {
@@ -171,6 +173,25 @@ GraphicsBox {
             anchors.horizontalCenter: parent.horizontalCenter
             y: 90
             scale: 0.75
+          }
+
+          // 队友已确认该武将：置灰并标记，不可再选
+          Rectangle {
+            anchors.fill: parent
+            color: "#80000000"
+            visible: root.shared && root.friend_selected === index
+            z: 5
+          }
+
+          Text {
+            anchors.centerIn: parent
+            text: "队友已选"
+            color: "#FFD700"
+            font.pixelSize: 16
+            style: Text.Outline
+            styleColor: "black"
+            visible: root.shared && root.friend_selected === index
+            z: 6
           }
         }
       }
@@ -232,6 +253,7 @@ GraphicsBox {
       .arg(Lua.tr("seat#" + roomScene.getPhoto(Cpp.self.id).seatNumber))
     root.friend_cards = data.friend;
     root.my_cards = data.me;
+    root.shared = data.shared ?? false;
     chooseGeneralModel.generals = root.my_cards;
     chooseGeneralModel.initGeneralModels();
 
@@ -262,6 +284,11 @@ GraphicsBox {
       friend_not_determ = -1;
       friend_recommend = -1;
       friend_selected = value;
+      // 同队共用将池：若队友已确认的武将与我方当前预选相同，清空我方预选
+      if (root.shared && root.selected === value) {
+        root.selected = -1;
+        ClientInstance.notifyServer("PushRequest", "updatemini,preselect,-1");
+      }
     } else if (type == "recommend") {
       my_recommend = value;
     } else if (type == "updateFriendCards") {
