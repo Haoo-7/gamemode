@@ -33,6 +33,51 @@ local function m_2v2_bpTeamOfSeat(seat)
   return (seat == 1 or seat == 4) and "loyalist" or "rebel"
 end
 
+-- 一控多时同一个控制器对应多个角色，小游戏只向每个控制器发一份请求。
+local function m_2v2_controlPlayers(room)
+  local ret = {}
+  for _, p in ipairs(room.players) do
+    if not table.find(ret, function(other) return other.serverplayer == p.serverplayer end) then
+      table.insert(ret, p)
+    end
+  end
+  return ret
+end
+
+local function m_2v2_controlledIds(room, player)
+  return table.map(table.filter(room.players, function(p)
+    return p.serverplayer == player.serverplayer
+  end), function(p)
+    return p.id
+  end)
+end
+
+local function m_2v2_controlsPlayer(room, player, playerId)
+  local target = room:getPlayerById(playerId)
+  return target ~= nil and target.serverplayer == player.serverplayer
+end
+
+-- 当前控制视角有时仍以被控制角色的 ID 上报；让同一控制器名下的角色都能路由小游戏事件。
+local function m_2v2_askMiniGame(room, players, params)
+  for _, p in ipairs(room.players) do
+    local controller = table.find(players, function(candidate)
+      return candidate.serverplayer == p.serverplayer
+    end)
+    if controller then
+      p.mini_game_data = {
+        type = params.game_type,
+        data = params.data_table[controller.id],
+      }
+    end
+  end
+
+  room:askToMiniGame(players, params)
+
+  for _, p in ipairs(room.players) do
+    p.mini_game_data = nil
+  end
+end
+
 --- 从 st.curPos 起寻找下一个仍需禁将的座位
 ---@return integer? playerId, integer? newPos
 local function m_2v2_bpNextTurn(st)
@@ -57,7 +102,7 @@ local function m_2v2_bpBroadcast(room, st)
     turnId = st.turnId,
     autoTurn = st.autoTurn,
   } }
-  for _, p in ipairs(room.players) do
+  for _, p in ipairs(m_2v2_controlPlayers(room)) do
     p:doNotify("UpdateMiniGame", data)
   end
 end
@@ -199,7 +244,7 @@ local function m_2v2_reserveBroadcast(room, st)
     turnRole = st.turnRole,
     autoTurn = st.autoTurn,
   } }
-  for _, p in ipairs(room.players) do
+  for _, p in ipairs(m_2v2_controlPlayers(room)) do
     p:doNotify("UpdateMiniGame", data)
   end
 end
@@ -371,7 +416,8 @@ local m_2v2_getLogic = function()
     end
 
     -- 十周年禁将BP：分配座次后、选将前，按轮询顺序进行禁将
-    if room:getSettings("enable2v2BP") and not room:getBanner("is_2v2_duel") then
+    local bpReserveState
+    if room:getSettings("enable2v2BP") then
       local bpPoolNum = math.max(12, math.min(room:getSettings("bpGeneralNum") or 24, 40))
       local bpBanNum = math.max(1, math.min(room:getSettings("bpBanNum") or 2, math.floor(bpPoolNum / 4)))
       local bpReserveNum = math.max(2, math.min(room:getSettings("bpReserveNum") or 5, 10))
@@ -399,7 +445,7 @@ local m_2v2_getLogic = function()
         room:setBanner("2v2_bp_state", st)
 
         local bpData = {}
-        for _, p in ipairs(room.players) do
+        for _, p in ipairs(m_2v2_controlPlayers(room)) do
           bpData[p.id] = {
             generals = bpGenerals,
             banned = {},
@@ -410,9 +456,10 @@ local m_2v2_getLogic = function()
             timeout = bpTimeout,
             myRole = p.role,
             selfId = p.id,
+            controlledIds = m_2v2_controlledIds(room, p),
           }
         end
-        room:askToMiniGame(room.players, {
+        m_2v2_askMiniGame(room, m_2v2_controlPlayers(room), {
           skill_name = "2v2_bp",
           game_type = "2v2_bp",
           data_table = bpData,
@@ -473,11 +520,12 @@ local m_2v2_getLogic = function()
         rst.playerBySeat[p.seat] = p.id
       end
       m_2v2_reserveFirstTurn(room, rst)
+      bpReserveState = rst
       room:setBanner("2v2_reserve_state", rst)
 
       if rst.turnId ~= -1 then
         local rData = {}
-        for _, p in ipairs(room.players) do
+        for _, p in ipairs(m_2v2_controlPlayers(room)) do
           rData[p.id] = {
             generals = rpool,
             reserved = {},
@@ -493,9 +541,10 @@ local m_2v2_getLogic = function()
             timeout = bpTimeout,
             myRole = p.role,
             selfId = p.id,
+            controlledIds = m_2v2_controlledIds(room, p),
           }
         end
-        room:askToMiniGame(room.players, {
+        m_2v2_askMiniGame(room, m_2v2_controlPlayers(room), {
           skill_name = "2v2_reserve",
           game_type = "2v2_reserve",
           data_table = rData,
@@ -518,11 +567,23 @@ local m_2v2_getLogic = function()
       local warm_marshal = room.players[2]
       local req = Request:new({ cool_marshal, warm_marshal }, "AskForGeneral")
       req.timeout = self.room:getSettings('generalTimeout')
-      local cool_generals = table.connect(t1, t4)
-      req:setData(cool_marshal, { cool_generals, 2 })
+      -- 统率二军由每名玩家一次选择本队两个角色；开启 BP 时从本队备选池中选择。
+      local rsv = bpReserveState
+      local cool_generals = rsv and rsv.loyalReserve or table.connect(t1, t4)
+      local cool_data = { cool_generals, 2 }
+      if rsv then
+        cool_data = { cool_generals, 2, false, false, "askForGeneralsChosen", "",
+          { n = 2, seatNumbers = { 1, 4 } } }
+      end
+      req:setData(cool_marshal, cool_data)
       req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 2))
-      local warm_generals = table.connect(t2, t3)
-      req:setData(warm_marshal, { warm_generals, 2 })
+      local warm_generals = rsv and rsv.rebelReserve or table.connect(t2, t3)
+      local warm_data = { warm_generals, 2 }
+      if rsv then
+        warm_data = { warm_generals, 2, false, false, "askForGeneralsChosen", "",
+          { n = 2, seatNumbers = { 2, 3 } } }
+      end
+      req:setData(warm_marshal, warm_data)
       req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 2))
 
       room:doBroadcastNotify("ShowToast",
@@ -542,7 +603,7 @@ local m_2v2_getLogic = function()
       end
     else
       -- 十周年禁将BP开启时：选将将池来自队伍备选池（同队共用一份、实时同步、确认后锁定）
-      local rsv = room:getBanner("2v2_reserve_state")
+      local rsv = bpReserveState or room:getBanner("2v2_reserve_state")
       local t1, t2, t3, t4
       if rsv then
         t1 = rsv.loyalReserve
@@ -632,6 +693,11 @@ end
 local m_2v2_mode = fk.CreateGameMode {
   name = "m_2v2_mode",
   playerNums = { 2, 4 },
+  feasible = function(self, settings)
+    local commander = (settings._mode or {}).enable2v2Duel == true
+    return table.contains(self.playerNums, settings.playerNum) and
+      settings.playerNum == (commander and 2 or 4)
+  end,
   rule = "#m_2v2_rule&",
   logic = m_2v2_getLogic,
   main_mode = "2v2_mode",
@@ -688,6 +754,11 @@ m_2v2_mode.ui_settings = {
     W.SwitchRow {
       _settingsKey = "enableLimitFeiyang",
       title = "m_2v2_limit_feiyang",
+    },
+
+    W.SwitchRow {
+      _settingsKey = "enable2v2Duel",
+      title = "2v2_2player",
     },
 
     W.SwitchRow {
@@ -758,14 +829,6 @@ m_2v2_mode.ui_settings = {
     },
   },
 
-  W.PreferenceGroup {
-    title = "",
-    W.SwitchRow {
-      _settingsKey = "_unused1",
-      title = "2v2_2player",
-      enabled = false,
-    }
-  },
 }
 
 Fk:loadTranslationTable {
@@ -782,7 +845,7 @@ Fk:loadTranslationTable {
   ["#m_2v2_feiyang-invoke"] = "飞扬：你可以弃置两张手牌，弃置自己判定区的一张牌",
 
   ["m_2v2_bp"] = "十周年禁将BP",
-  ["help: m_2v2_bp"] = "开启后启用十周年禁将BP规则，可设置所有玩家待选将池数量、每支队伍禁将数量与备选数量；开启时自动将房间人数设为4，仅限4人生效",
+  ["help: m_2v2_bp"] = "开启后启用十周年禁将BP规则，可设置待选将池数量、每支队伍禁将数量与备选数量。若要在2人房间使用，需另行开启“统率二军”设置",
   ["m_2v2_bp_timeout"] = "禁将时间",
   ["help: m_2v2_bp_timeout"] = "每轮禁将的倒计时时间，不得低于15秒，不得超过60秒，默认与选将时间一致",
   ["m_2v2_bp_pool"] = "所有玩家待选将池数量",
@@ -793,7 +856,7 @@ Fk:loadTranslationTable {
   ["help: m_2v2_bp_reserve"] = "每支队伍的所有备选武将数量，不得低于2（开启副将时不得低于4）",
 
   ["2v2_2player"] = "“统率二军”",
-  ["help: 2v2_2player"] = "游戏人数可以调成2，此时为“统率二军”模式 (此开关仅供提示)",
+  ["help: 2v2_2player"] = "允许房间人数设为2，此时两名玩家各控制两个角色；若同时开启十周年禁将BP，将在统率二军流程中完成禁将与备选",
 
   ["2v2_duel_choose_general"] = "请为本方阵营选择选择武将，从左至右为一四（或二三）",
 
@@ -830,13 +893,14 @@ Fk:addMiniGame {
     local st = room:getBanner("2v2_bp_state")
     if not st then return end
     local typ = data[1]
-    if typ == "ban" and player.id == st.turnId then
+    if typ == "ban" and m_2v2_controlsPlayer(room, player, st.turnId) and
+        (not data[3] or tostring(data[3]) == tostring(st.turnId)) then
       local name = data[2]
       -- 校验：武将必须在展示将池中且未被禁
       if table.find(st.generals, function(g) return g == name end) and
           not table.find(st.bans, function(b) return b.general == name end) then
-        table.insert(st.bans, { player = player.id, general = name })
-        local seat = room:getPlayerById(player.id).seat
+        table.insert(st.bans, { player = st.turnId, general = name })
+        local seat = room:getPlayerById(st.turnId).seat
         st.teamDone[m_2v2_bpTeamOfSeat(seat)] = st.teamDone[m_2v2_bpTeamOfSeat(seat)] + 1
         m_2v2_bpAdvance(room, st)
       end
@@ -844,7 +908,8 @@ Fk:addMiniGame {
       -- 当前轮为机器人/离线时，任一在线玩家可触发其自动禁将；
       -- 否则仅当前轮玩家本人超时跳过
       local isAuto = st.autoTurn
-      if player.id == st.turnId or isAuto then
+      local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
+      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or isAuto) then
         if isAuto then
           m_2v2_bpAutoBan(room, st)
         end
@@ -854,7 +919,7 @@ Fk:addMiniGame {
       -- 同队队友向当前禁将者推荐武将（转发给当前轮玩家与推荐者本人）；
       -- 再次点击同一武将则取消推荐
       local name = data[2]
-      if player.id ~= st.turnId then
+      if not m_2v2_controlsPlayer(room, player, st.turnId) then
         local active = room:getPlayerById(st.turnId)
         if active and
             m_2v2_bpTeamOfSeat(room:getPlayerById(player.id).seat) ==
@@ -889,10 +954,11 @@ Fk:addMiniGame {
     local st = room:getBanner("2v2_reserve_state")
     if not st then return end
     local typ = data[1]
-    if typ == "select" and player.id == st.turnId then
+    if typ == "select" and m_2v2_controlsPlayer(room, player, st.turnId) and
+        (not data[2] or tostring(data[2]) == tostring(st.turnId)) then
       -- 校验选将数量与合法性（去重、必须在剩余将池中）
       local picks = {}
-      for i = 2, #data do
+      for i = data[2] and 3 or 2, #data do
         local name = data[i]
         if table.find(st.pool, function(g) return g == name end) and
             not table.find(picks, function(g) return g == name end) then
@@ -900,7 +966,7 @@ Fk:addMiniGame {
         end
       end
       if #picks == st.count then
-        local team = m_2v2_reserveTeamOfSeat(room:getPlayerById(player.id).seat)
+        local team = m_2v2_reserveTeamOfSeat(room:getPlayerById(st.turnId).seat)
         for _, name in ipairs(picks) do
           table.removeOne(st.pool, name)
           table.insert(st[team], name)
@@ -911,7 +977,8 @@ Fk:addMiniGame {
       -- 当前轮为机器人/离线时，任一在线玩家可触发其随机补入备选；
       -- 否则仅当前轮玩家本人超时跳过
       local isAuto = st.autoTurn
-      if player.id == st.turnId or isAuto then
+      local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
+      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or isAuto) then
         if isAuto then
           m_2v2_reserveRandomFill(room, st)
         end
@@ -921,7 +988,7 @@ Fk:addMiniGame {
       -- 同队队友向当前备选玩家推荐武将（转发给当前轮玩家与推荐者本人）；
       -- 再次点击同一武将则取消推荐
       local name = data[2]
-      if player.id ~= st.turnId then
+      if not m_2v2_controlsPlayer(room, player, st.turnId) then
         local active = room:getPlayerById(st.turnId)
         if active and
             m_2v2_bpTeamOfSeat(room:getPlayerById(player.id).seat) ==

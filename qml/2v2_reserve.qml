@@ -34,6 +34,7 @@ GraphicsBox {
   property string myRole: "loyalist"
   property string turnRole: "loyalist"
   property int selfId: -1
+  property var controlledIds: []
   property var selected: []
   property bool autoTurn: false
   property string recommendGeneral: ""
@@ -51,6 +52,10 @@ GraphicsBox {
     return team(aSeat) === team(bSeat);
   }
 
+  function controlsPlayer(playerId) {
+    return root.controlledIds.includes(playerId);
+  }
+
   movable: false
   width: roomScene.width
   height: roomScene.height
@@ -65,7 +70,7 @@ GraphicsBox {
       if (root.remainSec <= 0) {
         countdownTimer.stop();
         // 所有客户端都会触发；服务端只处理当前轮玩家的 timeout
-        ClientInstance.notifyServer("PushRequest", "updatemini,timeout");
+        ClientInstance.notifyServer("PushRequest", "updatemini,timeout," + root.turnId);
       }
     }
   }
@@ -384,7 +389,7 @@ GraphicsBox {
                 }
 
                 onClicked: {
-                  if (root.selfId === root.turnId) {
+                  if (root.controlsPlayer(root.turnId)) {
                     // 自己是当前备选玩家：正常选中
                     if (isSelected) {
                       root.selected = root.selected.filter(n => n !== modelData);
@@ -418,9 +423,9 @@ GraphicsBox {
         MetroButton {
           text: Lua.tr("2v2_reserve_confirm")
           height: 35
-          visible: root.selfId === root.turnId && root.count > 0 && root.selected.length === root.count
+          visible: root.controlsPlayer(root.turnId) && root.count > 0 && root.selected.length === root.count
           onClicked: {
-            ClientInstance.notifyServer("PushRequest", "updatemini,select," + root.selected.join(","));
+            ClientInstance.notifyServer("PushRequest", "updatemini,select," + root.turnId + "," + root.selected.join(","));
             root.selected = [];
           }
         }
@@ -594,6 +599,7 @@ GraphicsBox {
     root.timeout = data.timeout ?? 30;
     root.myRole = data.myRole ?? "loyalist";
     root.selfId = data.selfId ?? -1;
+    root.controlledIds = data.controlledIds ?? [root.selfId];
     root.selected = [];
     root.restartCountdown();
   }

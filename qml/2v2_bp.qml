@@ -28,6 +28,7 @@ GraphicsBox {
   property int selfId: -1
   property int selectedIdx: -1
   property bool autoTurn: false
+  property var controlledIds: []
   property string recommendGeneral: ""
   property int recommendFrom: -1
 
@@ -41,6 +42,10 @@ GraphicsBox {
     }
     const team = s => (s === 1 || s === 4) ? 1 : 2;
     return team(aSeat) === team(bSeat);
+  }
+
+  function controlsPlayer(playerId) {
+    return root.controlledIds.includes(playerId);
   }
 
   movable: false
@@ -123,7 +128,7 @@ GraphicsBox {
 
           onFinished: {
             // 所有客户端都会触发；服务端只处理当前禁将者的 timeout
-            ClientInstance.notifyServer("PushRequest", "updatemini,timeout");
+            ClientInstance.notifyServer("PushRequest", "updatemini,timeout," + root.turnId);
           }
         }
       }
@@ -217,12 +222,12 @@ GraphicsBox {
               }
 
               onClicked: {
-                if (root.selfId === root.turnId) {
+                if (root.controlsPlayer(root.turnId)) {
                   // 自己是当前禁将者：正常选中/禁将
                   if (isBanned) return;
                   if (isSelected) {
                     root.selectedIdx = -1;
-                    ClientInstance.notifyServer("PushRequest", "updatemini,ban," + modelData);
+                  ClientInstance.notifyServer("PushRequest", "updatemini,ban," + modelData + "," + root.turnId);
                   } else {
                     root.selectedIdx = index;
                   }
@@ -366,6 +371,7 @@ GraphicsBox {
     root.timeout = data.timeout ?? 30;
     root.myRole = data.myRole ?? "loyalist";
     root.selfId = data.selfId ?? -1;
+    root.controlledIds = data.controlledIds ?? [root.selfId];
     root.selectedIdx = -1;
     root.restartCountdown();
   }
