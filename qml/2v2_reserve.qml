@@ -39,6 +39,7 @@ GraphicsBox {
   property bool autoTurn: false
   property string recommendGeneral: ""
   property int recommendFrom: -1
+  property bool observer: false
 
   // 判断两个玩家是否同队（1、4号位忠臣，2、3号位反贼）
   function isSameTeam(aId, bId) {
@@ -72,7 +73,7 @@ GraphicsBox {
     repeat: true
     running: false
     onTriggered: {
-      if (root.turnId >= 0) {
+      if (root.turnId >= 0 && !root.observer) {
         ClientInstance.notifyServer("PushRequest", "updatemini,tick," + root.turnId);
       }
       if (root.activeTurnUnavailable() && root.remainSec > 3) {
@@ -83,6 +84,7 @@ GraphicsBox {
       if (root.remainSec <= 0) {
         countdownTimer.stop();
         // 所有客户端都会触发；服务端只处理当前轮玩家的 timeout
+        if (root.observer) return;
         ClientInstance.notifyServer("PushRequest", "updatemini,timeout," + root.turnId);
       }
     }
@@ -94,7 +96,7 @@ GraphicsBox {
     repeat: false
     onTriggered: {
       root.close();
-      ClientInstance.replyToServer("", "");
+      if (!root.observer) ClientInstance.replyToServer("", "");
     }
   }
 
@@ -420,6 +422,7 @@ GraphicsBox {
                 }
 
                 onClicked: {
+                  if (root.observer) return;
                   if (root.controlsPlayer(root.turnId)) {
                     // 自己是当前备选玩家：正常选中
                     if (isSelected) {
@@ -629,6 +632,7 @@ GraphicsBox {
     // 全屏铺满：修正 showPopup 的居中偏移
     root.x = 0;
     root.y = 0;
+    root.observer = data.observer ?? false;
     root.generals = data.generals ?? [];
     root.reserved = data.reserved ?? [];
     root.turnId = data.turnId ?? -1;

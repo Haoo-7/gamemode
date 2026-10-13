@@ -78,6 +78,89 @@ local function m_2v2_askMiniGame(room, players, params)
   end
 end
 
+--- 旁观者视图数据：取其所绑定玩家所在队伍的数据，但去掉交互能力（只读）
+---@param base table @ 被绑定玩家（控制器）的小游戏数据
+---@param boundId integer @ 旁观者所绑定的玩家 id，用于同队判定
+local function m_2v2_observerData(base, boundId)
+  if not base then return nil end
+  local data = table.simpleClone(base)
+  data.selfId = boundId
+  data.controlledIds = {}
+  data.observer = true
+  return data
+end
+
+--- 将小游戏界面同步给所有旁观者（视角随其所绑定玩家所在的队伍）
+---@param players ServerPlayer[] @ 参与小游戏的控制器玩家
+---@param data_table table @ 各控制器的小游戏初始数据（按玩家 id 索引）
+local function m_2v2_openObserverMiniGame(room, game_type, players, data_table)
+  for _, t in ipairs(room.observers) do
+    local boundId, obs = table.unpack(t)
+    local target = table.find(players, function(candidate)
+      return m_2v2_controlsPlayer(room, candidate, boundId)
+    end)
+    local data = target and data_table[target.id]
+    if data then
+      -- 注意：旁观者为 C++ ServerPlayer，doNotify 需要已编码的 cbor 数据
+      obs:doNotify("ObserverMiniGame",
+        cbor.encode({ type = game_type, data = m_2v2_observerData(data, boundId) }))
+    end
+  end
+end
+
+--- 关闭所有旁观者的小游戏界面
+local function m_2v2_closeObserverMiniGame(room)
+  for _, t in ipairs(room.observers) do
+    local _, obs = table.unpack(t)
+    obs:doNotify("CloseObserverMiniGame", cbor.encode(""))
+  end
+end
+
+--- 仅向观察某玩家的旁观者发送消息（不经过被观察玩家本人）
+local function m_2v2_notifyObserversOf(room, player, command, data)
+  for _, t in ipairs(room.observers) do
+    local id, obs = table.unpack(t)
+    if m_2v2_controlsPlayer(room, player, id) then
+      obs:doNotify(command, cbor.encode(data))
+    end
+  end
+end
+
+--- BP 流程使用的小游戏类型
+local m_2v2_bpGameTypes = { ["2v2_bp"] = true, ["2v2_reserve"] = true, ["2v2_sel"] = true }
+
+--- 旁观者中途加入/切换视角时，把当前正在进行的 BP 界面补发给该旁观者
+local function m_2v2_pushObserverView(room, observerId)
+  for _, t in ipairs(room.observers) do
+    local boundId, obs, obsId = table.unpack(t)
+    if obsId == observerId then
+      local bound = room:getPlayerById(boundId)
+      local mg = bound and bound.mini_game_data
+      if mg and m_2v2_bpGameTypes[mg.type] and mg.data and
+          (mg.type ~= "2v2_sel" or room:getSettings("bpObserverViewPick")) then
+        obs:doNotify("ObserverMiniGame",
+          cbor.encode({ type = mg.type, data = m_2v2_observerData(mg.data, boundId) }))
+      end
+      return
+    end
+  end
+end
+
+--- 挂钩旁观者的加入/切换视角，使中途加入者也能同步到当前 BP 界面
+local function m_2v2_hookObservers(room)
+  if room._m2v2ObserveHooked then return end
+  room._m2v2ObserveHooked = true
+  local origObserve, origObservePlayer = room.addObserver, room.handleObservePlayer
+  room:addCallback("observe", function(r, id, data)
+    origObserve(r, id, data)
+    m_2v2_pushObserverView(r, id)
+  end)
+  room:addCallback("observe_player", function(r, id, data)
+    origObservePlayer(r, id, data)
+    m_2v2_pushObserverView(r, id)
+  end)
+end
+
 --- 从 st.curPos 起寻找下一个仍需禁将的座位
 ---@return integer? playerId, integer? newPos
 local function m_2v2_bpNextTurn(st)
@@ -420,13 +503,16 @@ local m_2v2_getLogic = function()
     -- 十周年禁将BP：分配座次后、选将前，按轮询顺序进行禁将
     local bpReserveState
     if room:getSettings("enable2v2BP") then
+      -- 让中途加入的旁观者也能同步到当前 BP 界面
+      m_2v2_hookObservers(room)
       local bpPoolNum = math.max(12, math.min(room:getSettings("bpGeneralNum") or 24, 40))
       local bpBanNum = math.max(1, math.min(room:getSettings("bpBanNum") or 2, math.floor(bpPoolNum / 4)))
       local bpReserveNum = math.max(2, math.min(room:getSettings("bpReserveNum") or 5, 10))
       local bpTimeout = math.max(15,
         math.min(room:getSettings("bpTimeout") or room:getSettings('generalTimeout') or room.timeout, 60))
       -- 5参 includeSameName：跟随"关闭同名武将替换"设置，关闭后同真名武将可同时出现
-      local bpGenerals = table.map(Fk:getGeneralsRandomly(bpPoolNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
+      local bpGenerals = table.map(
+        Fk:getGeneralsRandomly(bpPoolNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
 
       local st = {
         generals = bpGenerals,
@@ -462,12 +548,14 @@ local m_2v2_getLogic = function()
             controlledIds = m_2v2_controlledIds(room, p),
           }
         end
+        m_2v2_openObserverMiniGame(room, "2v2_bp", m_2v2_controlPlayers(room), bpData)
         m_2v2_askMiniGame(room, m_2v2_controlPlayers(room), {
           skill_name = "2v2_bp",
           game_type = "2v2_bp",
           data_table = bpData,
           timeout = bpBanNum * 2 * bpTimeout + 120,
         })
+        m_2v2_closeObserverMiniGame(room)
 
         -- 小游戏请求整体超时（例如所有客户端都烧条或断线）时，
         -- 自动随机完成仍未处理的禁将轮次，避免带着未完成的 BP 进入选将阶段。
@@ -560,12 +648,14 @@ local m_2v2_getLogic = function()
             controlledIds = m_2v2_controlledIds(room, p),
           }
         end
+        m_2v2_openObserverMiniGame(room, "2v2_reserve", m_2v2_controlPlayers(room), rData)
         m_2v2_askMiniGame(room, m_2v2_controlPlayers(room), {
           skill_name = "2v2_reserve",
           game_type = "2v2_reserve",
           data_table = rData,
           timeout = #rst.turns * bpTimeout + 120,
         })
+        m_2v2_closeObserverMiniGame(room)
 
         -- 请求整体超时后，随机补完尚未完成的队伍选人轮次。
         while rst.turnIdx <= #rst.turns do
@@ -586,7 +676,9 @@ local m_2v2_getLogic = function()
 
     local nonlord = room.players
     -- 5参 includeSameName：跟随"关闭同名武将替换"设置，关闭后同真名武将可同时出现
-    local generals = table.map(Fk:getGeneralsRandomly(#nonlord * generalNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
+    local generals = table.map(
+      Fk:getGeneralsRandomly(#nonlord * generalNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util
+      .NameMapper)
     table.shuffle(generals)
     local t1 = table.slice(generals, 1, generalNum + 1)
     local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
@@ -646,37 +738,43 @@ local m_2v2_getLogic = function()
         t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
         t4 = table.slice(generals, generalNum * 3 + 1, generalNum * 4 + 1)
       end
+      local selData = {
+        [nonlord[1].id] = {
+          friend_id = nonlord[4].id,
+          me = t1,
+          friend = t4,
+          shared = rsv and true or nil,
+        },
+        [nonlord[2].id] = {
+          friend_id = nonlord[3].id,
+          me = t2,
+          friend = t3,
+          shared = rsv and true or nil,
+        },
+        [nonlord[3].id] = {
+          friend_id = nonlord[2].id,
+          me = t3,
+          friend = t2,
+          shared = rsv and true or nil,
+        },
+        [nonlord[4].id] = {
+          friend_id = nonlord[1].id,
+          me = t4,
+          friend = t1,
+          shared = rsv and true or nil,
+        },
+      }
+      -- 仅当开启"允许旁观者查看队伍内部选将"时，向旁观者同步最终选将界面
+      if rsv and room:getSettings("bpObserverViewPick") then
+        m_2v2_openObserverMiniGame(room, "2v2_sel", nonlord, selData)
+      end
       local req = room:askToMiniGame(nonlord, {
         skill_name = "AskForGeneral",
         game_type = "2v2_sel",
-        data_table = {
-          [nonlord[1].id] = {
-            friend_id = nonlord[4].id,
-            me = t1,
-            friend = t4,
-            shared = rsv and true or nil,
-          },
-          [nonlord[2].id] = {
-            friend_id = nonlord[3].id,
-            me = t2,
-            friend = t3,
-            shared = rsv and true or nil,
-          },
-          [nonlord[3].id] = {
-            friend_id = nonlord[2].id,
-            me = t3,
-            friend = t2,
-            shared = rsv and true or nil,
-          },
-          [nonlord[4].id] = {
-            friend_id = nonlord[1].id,
-            me = t4,
-            friend = t1,
-            shared = rsv and true or nil,
-          },
-        },
+        data_table = selData,
         timeout = self.room:getSettings('generalTimeout'),
       })
+      m_2v2_closeObserverMiniGame(room)
       if rsv then
         -- 同队共用将池：处理超时/选重，保证同队两人所选武将不重复
         local takenLoyal, takenRebel = {}, {}
@@ -726,7 +824,7 @@ local m_2v2_mode = fk.CreateGameMode {
   feasible = function(self, settings)
     local commander = (settings._mode or {}).enable2v2Duel == true
     return table.contains(self.playerNums, settings.playerNum) and
-      settings.playerNum == (commander and 2 or 4)
+        settings.playerNum == (commander and 2 or 4)
   end,
   rule = "#m_2v2_rule&",
   logic = m_2v2_getLogic,
@@ -857,6 +955,14 @@ m_2v2_mode.ui_settings = {
         return settings._mode["enable2v2BP"] or false
       end,
     },
+
+    W.SwitchRow {
+      _settingsKey = "bpObserverViewPick",
+      title = "m_2v2_bp_observer_pick",
+      visible = function(settings)
+        return settings._mode["enable2v2BP"] or false
+      end,
+    },
   },
 
 }
@@ -884,6 +990,8 @@ Fk:loadTranslationTable {
   ["help: m_2v2_bp_ban"] = "每支队伍可以禁用的武将数量，不得高于所有玩家待选将池数量的1/4",
   ["m_2v2_bp_reserve"] = "每支队伍的所有备选数量",
   ["help: m_2v2_bp_reserve"] = "每支队伍的所有备选武将数量，不得低于2（开启副将时不得低于4）",
+  ["m_2v2_bp_observer_pick"] = "允许旁观者查看队伍内部选将",
+  ["help: m_2v2_bp_observer_pick"] = "开启后，旁观者可同步观看到其所在队伍视角的最终选将界面（禁将与备将界面始终同步）",
 
   ["2v2_2player"] = "“统率二军”",
   ["help: 2v2_2player"] = "允许房间人数设为2，此时两名玩家各控制两个角色；若同时开启十周年禁将BP，将在统率二军流程中完成禁将与备选",
@@ -896,6 +1004,7 @@ Fk:loadTranslationTable {
 
   ["2v2_reserve_prepick"] = "预选%1将",
   ["2v2_reserve_confirm"] = "确认",
+  ["2v2_observer_view"] = "旁观视角",
 }
 
 Fk:addMiniGame {
@@ -909,6 +1018,10 @@ Fk:addMiniGame {
     local d = player.mini_game_data.data
     local friend = room:getPlayerById(d.friend_id)
     friend:doNotify("UpdateMiniGame", data)
+    -- 旁观者：把操作者自身的动作同步给观察该玩家的旁观者（视角与操作者保持一致）
+    if d.shared and room:getSettings("bpObserverViewPick") then
+      m_2v2_notifyObserversOf(room, player, "UpdateMiniGame", { "observerOwn", data })
+    end
   end,
 }
 
@@ -938,7 +1051,7 @@ Fk:addMiniGame {
       -- 超时或当前禁将者掉线时，随机禁将一个武将并推进轮次。
       local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
       if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or
-          not m_2v2_bpIsOnline(room, st.turnId)) then
+            not m_2v2_bpIsOnline(room, st.turnId)) then
         m_2v2_bpAutoBan(room, st)
         m_2v2_bpAdvance(room, st)
       end
@@ -1004,7 +1117,7 @@ Fk:addMiniGame {
       -- 超时或当前选人者掉线时，随机补足本轮队伍备选并推进轮次。
       local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
       if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or
-          not m_2v2_bpIsOnline(room, st.turnId)) then
+            not m_2v2_bpIsOnline(room, st.turnId)) then
         m_2v2_reserveRandomFill(room, st)
         m_2v2_reserveAdvance(room, st)
       end

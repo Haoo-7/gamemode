@@ -31,6 +31,7 @@ GraphicsBox {
   property var controlledIds: []
   property string recommendGeneral: ""
   property int recommendFrom: -1
+  property bool observer: false
 
   // 判断两个玩家是否同队（1、4号位忠臣，2、3号位反贼）
   function isSameTeam(aId, bId) {
@@ -128,6 +129,7 @@ GraphicsBox {
 
           onFinished: {
             // 所有客户端都会触发；服务端只处理当前禁将者的 timeout
+            if (root.observer) return;
             ClientInstance.notifyServer("PushRequest", "updatemini,timeout," + root.turnId);
           }
         }
@@ -222,6 +224,7 @@ GraphicsBox {
               }
 
               onClicked: {
+                if (root.observer) return;
                 if (root.controlsPlayer(root.turnId)) {
                   // 自己是当前禁将者：正常选中/禁将
                   if (isBanned) return;
@@ -362,6 +365,7 @@ GraphicsBox {
     // 全屏铺满：修正 showPopup 的居中偏移
     root.x = 0;
     root.y = 0;
+    root.observer = data.observer ?? false;
     root.pool = data.generals ?? [];
     root.banned = data.banned ?? [];
     root.turnId = data.turnId ?? -1;
@@ -393,7 +397,7 @@ GraphicsBox {
       root.recommendFrom = data[1].fromId ?? -1;
     } else if (type === "finished") {
       // 所有队伍轮询禁将完毕，回复并关闭本窗口
-      ClientInstance.replyToServer("", "");
+      if (!root.observer) ClientInstance.replyToServer("", "");
       root.close();
     }
   }

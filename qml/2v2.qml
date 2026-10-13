@@ -20,6 +20,7 @@ GraphicsBox {
   property int selected: -1
   property bool initial: true
   property bool shared: false
+  property bool observer: false
 
   width: 70 + 100 * my_cards.length
   height: 360
@@ -73,7 +74,7 @@ GraphicsBox {
           required property string modelData
           required property int index
           dataModel: Ltk.createGeneralCardModel(modelData)
-          selectable: root.friend_selected === -1
+          selectable: !root.observer && root.friend_selected === -1
           onClicked: {
             if (!selectable) return;
             if (root.friend_recommend == index) {
@@ -147,7 +148,7 @@ GraphicsBox {
           required property int index
           dataModel: Ltk.createGeneralCardModel(modelData)
           // 同队共用将池时：队友确认选择的武将，本方不可再选
-          selectable: root.shared ? (root.friend_selected !== index) : true
+          selectable: root.observer ? false : (root.shared ? (root.friend_selected !== index) : true)
           chosenInBox: root.selected == index
           selected: root.selected == index
           onClicked: {
@@ -161,7 +162,7 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (Lua.client.getSettings("enableFreeAssign")) {
+            if (!root.observer && Lua.client.getSettings("enableFreeAssign")) {
               root.parent.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
                 { dataModel: chooseGeneralModel, index: index });
             }
@@ -204,6 +205,7 @@ GraphicsBox {
     height: 40
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 5
+    visible: !root.observer
 
     Row {
       anchors.horizontalCenter: parent.horizontalCenter
@@ -249,8 +251,13 @@ GraphicsBox {
   }
 
   function loadData(data) {
-    root.title.text = ("你的座次是 %1 , 请选择")
-      .arg(Lua.tr("seat#" + roomScene.getPhoto(Cpp.self.id).seatNumber))
+    root.observer = data.observer ?? false;
+    if (root.observer) {
+      root.title.text = Lua.tr("2v2_observer_view");
+    } else {
+      root.title.text = ("你的座次是 %1 , 请选择")
+        .arg(Lua.tr("seat#" + roomScene.getPhoto(Cpp.self.id).seatNumber));
+    }
     root.friend_cards = data.friend;
     root.my_cards = data.me;
     root.shared = data.shared ?? false;
@@ -261,7 +268,7 @@ GraphicsBox {
   }
 
   onMy_cardsChanged: {
-    if (root.initial) {
+    if (root.initial || root.observer) {
       return;
     }
 
@@ -287,10 +294,19 @@ GraphicsBox {
       // 同队共用将池：若队友已确认的武将与我方当前预选相同，清空我方预选
       if (root.shared && root.selected === value) {
         root.selected = -1;
-        ClientInstance.notifyServer("PushRequest", "updatemini,preselect,-1");
+        if (!root.observer) ClientInstance.notifyServer("PushRequest", "updatemini,preselect,-1");
       }
     } else if (type == "recommend") {
       my_recommend = value;
+    } else if (type == "observerOwn") {
+      // 旁观者：操作者自身的动作（视角与被观察玩家一致）
+      const sub = value ?? [];
+      const sType = sub[0];
+      if (sType == "preselect" || sType == "select") {
+        root.selected = sub[1] ?? -1;
+      } else if (sType == "recommend") {
+        root.my_recommend = sub[1] ?? -1;
+      }
     } else if (type == "updateFriendCards") {
       friend_cards = value.split("|");
     }
