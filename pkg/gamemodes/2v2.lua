@@ -250,7 +250,7 @@ local function m_2v2_reserveBroadcast(room, st)
 end
 
 --- 初始化第一轮（不广播），供 askToMiniGame 初始数据使用
---- 有在线玩家时设为轮询第一位（可能为机器人，其回合由客户端2秒倒计时驱动）；
+--- 有在线玩家时设为轮询第一位（可能为机器人，其回合由客户端3秒倒计时驱动）；
 --- 全机器人房间自动随机补完
 local function m_2v2_reserveFirstTurn(room, st)
   if not m_2v2_bpHasOnline(room) then
@@ -310,6 +310,8 @@ local function m_2v2_reserveAdvance(room, st)
   st.count = 0
   st.turnRole = "loyalist"
   room:setBanner("2v2_reserve_state", st)
+  -- 将最后一轮选人的结果同步到界面，再通知客户端进入展示等待。
+  m_2v2_reserveBroadcast(room, st)
   room:doBroadcastNotify("UpdateMiniGame", { "finished" })
 end
 
@@ -423,7 +425,8 @@ local m_2v2_getLogic = function()
       local bpReserveNum = math.max(2, math.min(room:getSettings("bpReserveNum") or 5, 10))
       local bpTimeout = math.max(15,
         math.min(room:getSettings("bpTimeout") or room:getSettings('generalTimeout') or room.timeout, 60))
-      local bpGenerals = table.map(Fk:getGeneralsRandomly(bpPoolNum), Util.NameMapper)
+      -- 5参 includeSameName：跟随"关闭同名武将替换"设置，关闭后同真名武将可同时出现
+      local bpGenerals = table.map(Fk:getGeneralsRandomly(bpPoolNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
 
       local st = {
         generals = bpGenerals,
@@ -465,6 +468,19 @@ local m_2v2_getLogic = function()
           data_table = bpData,
           timeout = bpBanNum * 2 * bpTimeout + 120,
         })
+
+        -- 小游戏请求整体超时（例如所有客户端都烧条或断线）时，
+        -- 自动随机完成仍未处理的禁将轮次，避免带着未完成的 BP 进入选将阶段。
+        while true do
+          local nextId, newPos = m_2v2_bpNextTurn(st)
+          if not nextId then break end
+          st.turnId = nextId
+          st.curPos = newPos
+          m_2v2_bpAutoBan(room, st)
+        end
+        st.turnId = -1
+        st.autoTurn = false
+        room:setBanner("2v2_bp_state", st)
       else
         -- 全机器人房间：直接自动完成全部禁将
         while true do
@@ -550,13 +566,27 @@ local m_2v2_getLogic = function()
           data_table = rData,
           timeout = #rst.turns * bpTimeout + 120,
         })
+
+        -- 请求整体超时后，随机补完尚未完成的队伍选人轮次。
+        while rst.turnIdx <= #rst.turns do
+          local turn = rst.turns[rst.turnIdx]
+          rst.turnId = rst.playerBySeat[turn.seat]
+          rst.count = turn.count
+          rst.turnRole = m_2v2_bpTeamOfSeat(turn.seat)
+          m_2v2_reserveRandomFill(room, rst)
+          rst.turnIdx = rst.turnIdx + 1
+        end
+        rst.turnId = -1
+        rst.count = 0
+        room:setBanner("2v2_reserve_state", rst)
       end
       -- 备选结果保留在 banner 中，供后续 2v2 选将环节使用
       room:setBanner("2v2_bp_state", nil)
     end
 
     local nonlord = room.players
-    local generals = table.map(Fk:getGeneralsRandomly(#nonlord * generalNum), Util.NameMapper)
+    -- 5参 includeSameName：跟随"关闭同名武将替换"设置，关闭后同真名武将可同时出现
+    local generals = table.map(Fk:getGeneralsRandomly(#nonlord * generalNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
     table.shuffle(generals)
     local t1 = table.slice(generals, 1, generalNum + 1)
     local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
@@ -905,14 +935,11 @@ Fk:addMiniGame {
         m_2v2_bpAdvance(room, st)
       end
     elseif typ == "timeout" then
-      -- 当前轮为机器人/离线时，任一在线玩家可触发其自动禁将；
-      -- 否则仅当前轮玩家本人超时跳过
-      local isAuto = st.autoTurn
+      -- 超时或当前禁将者掉线时，随机禁将一个武将并推进轮次。
       local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
-      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or isAuto) then
-        if isAuto then
-          m_2v2_bpAutoBan(room, st)
-        end
+      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or
+          not m_2v2_bpIsOnline(room, st.turnId)) then
+        m_2v2_bpAutoBan(room, st)
         m_2v2_bpAdvance(room, st)
       end
     elseif typ == "recommend" then
@@ -974,14 +1001,11 @@ Fk:addMiniGame {
         m_2v2_reserveAdvance(room, st)
       end
     elseif typ == "timeout" then
-      -- 当前轮为机器人/离线时，任一在线玩家可触发其随机补入备选；
-      -- 否则仅当前轮玩家本人超时跳过
-      local isAuto = st.autoTurn
+      -- 超时或当前选人者掉线时，随机补足本轮队伍备选并推进轮次。
       local staleTurn = data[2] and tostring(data[2]) ~= tostring(st.turnId)
-      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or isAuto) then
-        if isAuto then
-          m_2v2_reserveRandomFill(room, st)
-        end
+      if not staleTurn and (m_2v2_controlsPlayer(room, player, st.turnId) or
+          not m_2v2_bpIsOnline(room, st.turnId)) then
+        m_2v2_reserveRandomFill(room, st)
         m_2v2_reserveAdvance(room, st)
       end
     elseif typ == "recommend" then

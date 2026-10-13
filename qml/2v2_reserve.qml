@@ -56,6 +56,12 @@ GraphicsBox {
     return root.controlledIds.includes(playerId);
   }
 
+  function showGeneralDetail(general) {
+    root.roomScene.showInfoPopup(
+      Qt.createComponent("LunarLtk.Pages.InfoPopups", "GeneralDetail"),
+      { generals: [general] });
+  }
+
   movable: false
   width: roomScene.width
   height: roomScene.height
@@ -66,12 +72,29 @@ GraphicsBox {
     repeat: true
     running: false
     onTriggered: {
+      if (root.turnId >= 0) {
+        ClientInstance.notifyServer("PushRequest", "updatemini,tick," + root.turnId);
+      }
+      if (root.activeTurnUnavailable() && root.remainSec > 3) {
+        root.remainSec = 3;
+        return;
+      }
       root.remainSec--;
       if (root.remainSec <= 0) {
         countdownTimer.stop();
         // 所有客户端都会触发；服务端只处理当前轮玩家的 timeout
         ClientInstance.notifyServer("PushRequest", "updatemini,timeout," + root.turnId);
       }
+    }
+  }
+
+  Timer {
+    id: finishedDelay
+    interval: 3000
+    repeat: false
+    onTriggered: {
+      root.close();
+      ClientInstance.replyToServer("", "");
     }
   }
 
@@ -209,6 +232,14 @@ GraphicsBox {
             required property string modelData
             width: 44
             height: 50
+
+            TapHandler {
+              acceptedButtons: Qt.LeftButton | Qt.RightButton
+              onTapped: (point, button) => {
+                if (button === Qt.RightButton) root.showGeneralDetail(modelData);
+              }
+              onLongPressed: root.showGeneralDetail(modelData)
+            }
 
             Avatar {
               anchors.fill: parent
@@ -460,6 +491,14 @@ GraphicsBox {
             width: 44
             height: 50
 
+            TapHandler {
+              acceptedButtons: Qt.LeftButton | Qt.RightButton
+              onTapped: (point, button) => {
+                if (button === Qt.RightButton) root.showGeneralDetail(modelData);
+              }
+              onLongPressed: root.showGeneralDetail(modelData)
+            }
+
             Avatar {
               anchors.fill: parent
               general: modelData
@@ -570,9 +609,14 @@ GraphicsBox {
     return ret;
   }
 
-  // 机器人/离线回合使用 2 秒倒计时，真人回合使用禁将时间
+  function activeTurnUnavailable() {
+    const photo = root.roomScene.dataModel.getPhoto(root.turnId);
+    return !photo || photo.netstate !== "online";
+  }
+
+  // 机器人、托管或离线回合使用 3 秒倒计时，真人回合使用设置时间。
   function effectiveTimeout() {
-    return root.autoTurn ? 2 : root.timeout;
+    return (root.autoTurn || root.activeTurnUnavailable()) ? 3 : root.timeout;
   }
 
   function restartCountdown() {
@@ -621,15 +665,16 @@ GraphicsBox {
       root.reserveNum = st.reserveNum ?? root.reserveNum;
       root.selected = [];
       root.recommendGeneral = "";
-      root.restartCountdown();
+      if (root.turnId >= 0) root.restartCountdown();
+      else countdownTimer.stop();
     } else if (type === "recommend") {
       // 同队队友推荐/取消推荐的武将（仅同队成员收到）
       root.recommendGeneral = data[1].general;
       root.recommendFrom = data[1].fromId ?? -1;
     } else if (type === "finished") {
-      // 全部轮次完成，回复并关闭本窗口
-      ClientInstance.replyToServer("", "");
-      root.close();
+      // 展示最终队伍备选结果 3 秒，再关闭窗口并回复服务器。
+      countdownTimer.stop();
+      finishedDelay.start();
     }
   }
 }
