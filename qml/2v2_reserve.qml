@@ -73,7 +73,7 @@ GraphicsBox {
     repeat: true
     running: false
     onTriggered: {
-      if (root.turnId >= 0 && !root.observer) {
+      if (root.count > 0 && !root.observer) {
         ClientInstance.notifyServer("PushRequest", "updatemini,tick," + root.turnId);
       }
       if (root.activeTurnUnavailable() && root.remainSec > 3) {
@@ -649,7 +649,8 @@ GraphicsBox {
     root.selfId = data.selfId ?? -1;
     root.controlledIds = data.controlledIds ?? [root.selfId];
     root.selected = [];
-    root.restartCountdown();
+    if (root.count > 0) root.restartCountdown();
+    else countdownTimer.stop();
   }
 
   function updateData(data) {
@@ -669,7 +670,9 @@ GraphicsBox {
       root.reserveNum = st.reserveNum ?? root.reserveNum;
       root.selected = [];
       root.recommendGeneral = "";
-      if (root.turnId >= 0) root.restartCountdown();
+      // Robot and summoned-player IDs are negative, including -1.
+      // The server marks the end of reserving with count == 0.
+      if (root.count > 0) root.restartCountdown();
       else countdownTimer.stop();
     } else if (type === "recommend") {
       // 同队队友推荐/取消推荐的武将（仅同队成员收到）

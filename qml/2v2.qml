@@ -162,7 +162,7 @@ GraphicsBox {
           }
 
           onRightClicked: {
-            if (!root.observer && Lua.client.getSettings("enableFreeAssign")) {
+            if (!root.observer && !root.shared && Lua.client.getSettings("enableFreeAssign")) {
               root.parent.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "FreeAssign"),
                 { dataModel: chooseGeneralModel, index: index });
             }

@@ -299,6 +299,31 @@ local function m_2v2_reserveTeamOfSeat(seat)
   return (seat == 1 or seat == 4) and "loyalReserve" or "rebelReserve"
 end
 
+-- Resolve a reply to its reserved slot. Converted versions require the room setting
+-- and the same availability check used by the client's SameConvert dialog.
+local function m_2v2_reservedSlot(room, pool, general)
+  if type(general) ~= "string" or general == "" then return nil end
+  for _, name in ipairs(pool) do
+    if general == name then return name end
+  end
+  if room:getSettings("disableSameConvert") then return nil end
+  for _, name in ipairs(pool) do
+    if table.contains(Fk:getSameGenerals(name), general) then return name end
+  end
+end
+
+local function m_2v2_reservedPick(room, pool, general, taken)
+  local slot = m_2v2_reservedSlot(room, pool, general)
+  if not slot or taken[slot] then
+    local available = table.filter(pool, function(name) return not taken[name] end)
+    general = room:tableRandomPick(available, 1)[1]
+    slot = general
+  end
+  assert(slot, "2v2 BP team has too few reserved generals")
+  taken[slot] = true
+  return general
+end
+
 --- 将当前轮 count 个武将随机放入当前轮玩家的队伍备选池
 local function m_2v2_reserveRandomFill(room, st)
   local team = m_2v2_reserveTeamOfSeat(room:getPlayerById(st.turnId).seat)
@@ -557,6 +582,10 @@ local m_2v2_getLogic = function()
         })
         m_2v2_closeObserverMiniGame(room)
 
+        -- getBanner returns a shallow copy: numeric progress in the local state
+        -- does not follow the updates performed by the mini-game callbacks.
+        st = room:getBanner("2v2_bp_state") or st
+
         -- 小游戏请求整体超时（例如所有客户端都烧条或断线）时，
         -- 自动随机完成仍未处理的禁将轮次，避免带着未完成的 BP 进入选将阶段。
         while true do
@@ -604,9 +633,13 @@ local m_2v2_getLogic = function()
           table.insert(rpool, g)
         end
       end
+      -- Each team needs two final picks; do not request more reservations than
+      -- the post-ban pool can supply equally to both teams.
+      bpReserveNum = math.min(bpReserveNum, math.floor(#rpool / 2))
+      assert(bpReserveNum >= 2, "2v2 BP has too few generals after bans")
       local rst = {
         pool = rpool,
-        generals = rpool,
+        generals = table.simpleClone(rpool),
         turns = m_2v2_reserveBuildTurns(bpReserveNum),
         turnIdx = 1,
         turnId = -1,
@@ -627,11 +660,12 @@ local m_2v2_getLogic = function()
       bpReserveState = rst
       room:setBanner("2v2_reserve_state", rst)
 
-      if rst.turnId ~= -1 then
+      -- A real robot can also have ID -1; count == 0 marks completion.
+      if rst.count > 0 then
         local rData = {}
         for _, p in ipairs(m_2v2_controlPlayers(room)) do
           rData[p.id] = {
-            generals = rpool,
+            generals = rst.generals,
             reserved = {},
             turnId = rst.turnId,
             count = rst.count,
@@ -657,6 +691,10 @@ local m_2v2_getLogic = function()
         })
         m_2v2_closeObserverMiniGame(room)
 
+        -- Resume from authoritative progress, not the pre-request snapshot.
+        -- Otherwise completed turns are randomly filled a second time.
+        rst = room:getBanner("2v2_reserve_state") or rst
+
         -- 请求整体超时后，随机补完尚未完成的队伍选人轮次。
         while rst.turnIdx <= #rst.turns do
           local turn = rst.turns[rst.turnIdx]
@@ -670,16 +708,19 @@ local m_2v2_getLogic = function()
         rst.count = 0
         room:setBanner("2v2_reserve_state", rst)
       end
+      bpReserveState = rst
       -- 备选结果保留在 banner 中，供后续 2v2 选将环节使用
       room:setBanner("2v2_bp_state", nil)
     end
 
     local nonlord = room.players
     -- 5参 includeSameName：跟随"关闭同名武将替换"设置，关闭后同真名武将可同时出现
-    local generals = table.map(
-      Fk:getGeneralsRandomly(#nonlord * generalNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util
-      .NameMapper)
-    table.shuffle(generals)
+    local generals = {}
+    if not bpReserveState then
+      generals = table.map(
+        Fk:getGeneralsRandomly(#nonlord * generalNum, nil, nil, nil, room:getSettings("disableSameConvert")), Util.NameMapper)
+      table.shuffle(generals)
+    end
     local t1 = table.slice(generals, 1, generalNum + 1)
     local t2 = table.slice(generals, generalNum + 1, generalNum * 2 + 1)
     local t3 = table.slice(generals, generalNum * 2 + 1, generalNum * 3 + 1)
@@ -694,16 +735,16 @@ local m_2v2_getLogic = function()
       local cool_generals = rsv and rsv.loyalReserve or table.connect(t1, t4)
       local cool_data = { cool_generals, 2 }
       if rsv then
-        cool_data = { cool_generals, 2, false, false, "askForGeneralsChosen", "",
-          { n = 2, seatNumbers = { 1, 4 } } }
+        cool_data = { cool_generals, 2, room:getSettings("disableSameConvert") or false, false, "askForGeneralsChosen", "",
+          { n = 2, seatNumbers = { 1, 4 }, disableFreeAssign = true } }
       end
       req:setData(cool_marshal, cool_data)
       req:setDefaultReply(cool_marshal, room:tableRandomPick(cool_generals, 2))
       local warm_generals = rsv and rsv.rebelReserve or table.connect(t2, t3)
       local warm_data = { warm_generals, 2 }
       if rsv then
-        warm_data = { warm_generals, 2, false, false, "askForGeneralsChosen", "",
-          { n = 2, seatNumbers = { 2, 3 } } }
+        warm_data = { warm_generals, 2, room:getSettings("disableSameConvert") or false, false, "askForGeneralsChosen", "",
+          { n = 2, seatNumbers = { 2, 3 }, disableFreeAssign = true } }
       end
       req:setData(warm_marshal, warm_data)
       req:setDefaultReply(warm_marshal, room:tableRandomPick(warm_generals, 2))
@@ -713,16 +754,27 @@ local m_2v2_getLogic = function()
         { cool_marshal, warm_marshal })
       req:ask()
 
-      local glist = {}
-      table.insert(glist, req:getResult(cool_marshal)[1])
-      table.insertTable(glist, req:getResult(warm_marshal))
-      table.insert(glist, req:getResult(cool_marshal)[2])
+      local cool_result, warm_result = req:getResult(cool_marshal), req:getResult(warm_marshal)
+      if rsv then
+        local function normalizePair(pool, result)
+          result = type(result) == "table" and result or {}
+          local taken = {}
+          return {
+            m_2v2_reservedPick(room, pool, result[1], taken),
+            m_2v2_reservedPick(room, pool, result[2], taken),
+          }
+        end
+        cool_result = normalizePair(cool_generals, cool_result)
+        warm_result = normalizePair(warm_generals, warm_result)
+      end
+      local glist = { cool_result[1], warm_result[1], warm_result[2], cool_result[2] }
 
       for i = 1, 4, 1 do
         local p = room.players[i]
         room:setPlayerGeneral(p, glist[i], true, true)
         room:findGeneral(glist[i])
       end
+      if rsv then room:setBanner("2v2_reserve_state", nil) end
     else
       -- 十周年禁将BP开启时：选将将池来自队伍备选池（同队共用一份、实时同步、确认后锁定）
       local rsv = bpReserveState or room:getBanner("2v2_reserve_state")
@@ -782,14 +834,7 @@ local m_2v2_getLogic = function()
           local isLoyal = (p.seat == 1 or p.seat == 4)
           local pool = isLoyal and rsv.loyalReserve or rsv.rebelReserve
           local taken = isLoyal and takenLoyal or takenRebel
-          local general = req:getResult(p)
-          if general == "" or taken[general] then
-            local avail = table.filter(pool, function(g) return not taken[g] end)
-            if #avail > 0 then
-              general = room:tableRandomPick(avail, 1)[1]
-            end
-          end
-          taken[general] = true
+          local general = m_2v2_reservedPick(room, pool, req:getResult(p), taken)
           room:setPlayerGeneral(p, general, true, true)
           room:findGeneral(general)
         end
