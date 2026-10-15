@@ -71,11 +71,18 @@ local function m_2v2_askMiniGame(room, players, params)
     end
   end
 
-  room:askToMiniGame(players, params)
+  local req = room:askToMiniGame(players, params)
+
+  -- Close the completed mini-game before the next request, including timeouts.
+  -- Target controllers directly so one-controller/two-characters gets one reset.
+  for _, p in ipairs(players) do
+    p.serverplayer:doNotify("CancelRequest", cbor.encode(""))
+  end
 
   for _, p in ipairs(room.players) do
     p.mini_game_data = nil
   end
+  return req
 end
 
 --- 旁观者视图数据：取其所绑定玩家所在队伍的数据，但去掉交互能力（只读）
@@ -820,7 +827,7 @@ local m_2v2_getLogic = function()
       if rsv and room:getSettings("bpObserverViewPick") then
         m_2v2_openObserverMiniGame(room, "2v2_sel", nonlord, selData)
       end
-      local req = room:askToMiniGame(nonlord, {
+      local req = m_2v2_askMiniGame(room, nonlord, {
         skill_name = "AskForGeneral",
         game_type = "2v2_sel",
         data_table = selData,

@@ -8,6 +8,7 @@ import LunarLtk
 import LunarLtk.Components
 import LunarLtk.Pages.Popups
 import LunarLtk.Models.Popups
+import "RequestLifecycle.js" as RequestLifecycle
 GraphicsBox {
   id: root
 
@@ -232,10 +233,10 @@ GraphicsBox {
         enabled: root.selected >= 0
 
         onClicked: {
-          close();
-          roomScene.state = "notactive";
+          const general = root.my_cards[root.selected];
           ClientInstance.notifyServer("PushRequest", "updatemini,select," + root.selected);
-          ClientInstance.replyToServer("", root.my_cards[root.selected]);
+          RequestLifecycle.finish(roomScene, root, root.observer,
+            result => ClientInstance.replyToServer("", result), general);
         }
       }
 

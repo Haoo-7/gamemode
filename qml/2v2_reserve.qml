@@ -2,6 +2,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "RequestLifecycle.js" as RequestLifecycle
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -95,8 +96,8 @@ GraphicsBox {
     interval: 3000
     repeat: false
     onTriggered: {
-      root.close();
-      if (!root.observer) ClientInstance.replyToServer("", "");
+      RequestLifecycle.finish(roomScene, root, root.observer,
+        result => ClientInstance.replyToServer("", result), "");
     }
   }
 

@@ -2,6 +2,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "RequestLifecycle.js" as RequestLifecycle
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -397,8 +398,8 @@ GraphicsBox {
       root.recommendFrom = data[1].fromId ?? -1;
     } else if (type === "finished") {
       // 所有队伍轮询禁将完毕，回复并关闭本窗口
-      if (!root.observer) ClientInstance.replyToServer("", "");
-      root.close();
+      RequestLifecycle.finish(roomScene, root, root.observer,
+        result => ClientInstance.replyToServer("", result), "");
     }
   }
 }
