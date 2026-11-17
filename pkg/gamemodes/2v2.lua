@@ -461,7 +461,15 @@ local m_2v2_getLogic = function()
     local cowner = croom:getOwner()
     local owner = getPlayerByScreenName(room, cowner:getScreenName())
     local buddy
-    if not room:getBanner("is_2v2_duel") then
+    -- 房主自选队友：仅在房主于模式设置中显式开启 enable2v2PickBuddy 时生效，
+    -- 默认关闭，座次完全随机，避免房主固定拉强手当队友。
+    local allowPickBuddy = room:getSettings("enable2v2PickBuddy") and true or false
+    if room:getBanner("is_2v2_duel") then
+      -- 统率二军：房主与其副将（同一控制者）固定同队，不询问
+      buddy = owner and table.find(getOtherPlayers(room, owner), function(p)
+        return p.id < 0 and p.serverplayer == cowner
+      end)
+    elseif allowPickBuddy and owner then
       buddy = room:askToChoosePlayers(owner, {
         min_num = 1,
         max_num = 1,
@@ -471,10 +479,6 @@ local m_2v2_getLogic = function()
         cancelable = true,
         no_indicate = true,
       })[1]
-    else
-      buddy = table.find(getOtherPlayers(room, owner), function(p)
-        return p.id < 0 and p.serverplayer == cowner
-      end)
     end
 
     if buddy then
@@ -932,6 +936,11 @@ m_2v2_mode.ui_settings = {
     title = "Game Rule",
 
     W.SwitchRow {
+      _settingsKey = "enable2v2PickBuddy",
+      title = "m_2v2_pick_buddy",
+    },
+
+    W.SwitchRow {
       _settingsKey = "enableLimitFeiyang",
       title = "m_2v2_limit_feiyang",
     },
@@ -1024,6 +1033,9 @@ Fk:loadTranslationTable {
   [":m_2v2_mode"] = desc_2v2,
 
   ["#m_2v2_choose_buddy"] = "请房主选择自己的队友",
+
+  ["m_2v2_pick_buddy"] = "房主自选队友",
+  ["help: m_2v2_pick_buddy"] = "开启后，开局时房主可选择一名玩家作为自己的队友，其余两人自动成为另一队；关闭后四人座次完全随机。默认关闭。",
 
   ["time limitation: 1 min"] = "游戏时长达到1分钟",
   ["2v2: left you alive"] = "你所处队伍仅剩你存活",

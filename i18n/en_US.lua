@@ -42,6 +42,8 @@ return {
 
   ["m_2v2_mode"] = "2v2",
   [":m_2v2_mode"] = desc_2v2,
+  ["m_2v2_pick_buddy"] = "Host picks own teammate",
+  ["help: m_2v2_pick_buddy"] = "When enabled, the host may choose one player as their teammate before the game; the remaining two players form the other team. Disabled by default, so seating is fully random.",
   ["time limitation: 2 min"] = "Game time should > 2 min",
   ["2v2: left you alive"] = "Only you are alive",
 
